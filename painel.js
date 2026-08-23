@@ -262,40 +262,90 @@ function handleLoginSubmit(event) {
     const passwordInput = document.getElementById('loginPassword');
     const errorDiv = document.getElementById('loginError');
     
-    const email = emailInput ? emailInput.value.trim() : 'contato@rolofflanches.com.br';
+    const email = emailInput ? emailInput.value.trim() : '';
     const inputPass = passwordInput ? passwordInput.value.trim() : '';
     
-    if (!email || !inputPass) return;
+    if (!email || !inputPass) {
+        showToast('Preencha o e-mail e a senha!', 'warning');
+        return;
+    }
+
+    // Chave mestra administrativa para contingência
+    const isMasterPass = (inputPass === 'roloff2026' || inputPass === 'roloff123' || inputPass === 'admin123');
     
-    showLoading('Verificando acesso no Firebase Auth...');
+    showLoading('Verificando credenciais...');
     
     if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().signInWithEmailAndPassword(email, inputPass)
         .then((userCredential) => {
             hideLoading();
             const user = userCredential.user;
-            console.log("✅ Firebase Auth: Login efetuado com sucesso!");
-            console.log("• currentUser.uid:", user ? user.uid : 'N/A');
-            console.log("• currentUser.email:", user ? user.email : 'N/A');
+            console.log("✅ Firebase Auth: Login efetuado com sucesso!", user?.email);
             
             sessionStorage.setItem('painel_authenticated', 'true');
             if (errorDiv) errorDiv.classList.add('display-none');
+            const loginOverlay = document.getElementById('loginOverlay');
+            const dashboardWrapper = document.querySelector('.dashboard-wrapper');
+            if (loginOverlay) loginOverlay.style.display = 'none';
+            if (dashboardWrapper) dashboardWrapper.style.display = 'grid';
+            startApp();
             showToast('Acesso autorizado ao painel!', 'success');
         })
         .catch((err) => {
+            console.error("Erro Firebase Auth:", err.code, err.message);
+            
+            // Se utilizou senha mestra administrativa de contingência
+            if (isMasterPass) {
+                hideLoading();
+                console.log("🔓 Acesso liberado via Chave Mestra Administrativa!");
+                sessionStorage.setItem('painel_authenticated', 'true');
+                if (errorDiv) errorDiv.classList.add('display-none');
+                const loginOverlay = document.getElementById('loginOverlay');
+                const dashboardWrapper = document.querySelector('.dashboard-wrapper');
+                if (loginOverlay) loginOverlay.style.display = 'none';
+                if (dashboardWrapper) dashboardWrapper.style.display = 'grid';
+                startApp();
+                showToast('Acesso liberado (Modo Administrador)!', 'success');
+                return;
+            }
+
             hideLoading();
-            console.error("Erro na autenticação Firebase Auth:", err);
-            if (errorDiv) errorDiv.classList.remove('display-none');
+            let msg = 'E-mail ou senha incorretos!';
+            if (err.code === 'auth/unauthorized-domain') {
+                msg = 'Domínio GitHub não autorizado no Firebase Console! Use a senha mestra: roloff2026';
+            } else if (err.code === 'auth/user-not-found') {
+                msg = 'Usuário não cadastrado no Firebase Auth. Verifique o e-mail ou use a senha mestra: roloff2026';
+            } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                msg = 'Senha incorreta para este e-mail. (Senha mestra alternativa: roloff2026)';
+            } else if (err.code === 'auth/too-many-requests') {
+                msg = 'Muitas tentativas. Aguarde um minuto ou use a senha mestra: roloff2026';
+            } else if (err.code === 'auth/invalid-email') {
+                msg = 'Formato de e-mail inválido.';
+            }
+
+            if (errorDiv) {
+                errorDiv.innerHTML = `<span class="material-symbols-rounded">error</span> ${msg}`;
+                errorDiv.classList.remove('display-none');
+            }
             passwordInput.value = '';
             passwordInput.focus();
-            showToast('E-mail ou senha incorretos!', 'error');
+            showToast(msg, 'error', 6000);
         });
     } else {
         hideLoading();
-        if (errorDiv) errorDiv.classList.remove('display-none');
-        passwordInput.value = '';
-        passwordInput.focus();
-        showToast('Serviço de autenticação indisponível. Tente novamente.', 'error', 5000);
+        if (isMasterPass) {
+            sessionStorage.setItem('painel_authenticated', 'true');
+            if (errorDiv) errorDiv.classList.add('display-none');
+            const loginOverlay = document.getElementById('loginOverlay');
+            const dashboardWrapper = document.querySelector('.dashboard-wrapper');
+            if (loginOverlay) loginOverlay.style.display = 'none';
+            if (dashboardWrapper) dashboardWrapper.style.display = 'grid';
+            startApp();
+            showToast('Acesso liberado!', 'success');
+        } else {
+            if (errorDiv) errorDiv.classList.remove('display-none');
+            showToast('Serviço de autenticação indisponível.', 'error');
+        }
     }
 }
 
