@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roloff-lanches-v2';
+const CACHE_NAME = 'roloff-lanches-v3';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -23,6 +23,7 @@ const STATIC_ASSETS = [
     './assets/picadao_folheto.jpg',
     './assets/pastel.jpg',
     './assets/hotdog.jpg',
+    './assets/hotdog_calabresa.jpg',
     './assets/xis.jpg',
     './assets/torrada.jpg'
 ];
