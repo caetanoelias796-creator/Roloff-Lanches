@@ -1805,9 +1805,17 @@ function updateCartUI() {
         if (submitBtnText) {
             if (activeOrder && activeOrder.cart && activeOrder.cart.length > 0) {
                 const nextRound = (Number(activeOrder.roundsCount) || Number(activeOrder.round) || 1) + 1;
-                submitBtnText.innerText = `Enviar Rodada ${nextRound}`;
+                if (tableCart.length === 0) {
+                    submitBtnText.innerText = `➕ Adicione itens para a Rodada ${nextRound}`;
+                } else {
+                    submitBtnText.innerText = `Enviar Rodada ${nextRound} (${tableCart.length} ${tableCart.length === 1 ? 'item' : 'itens'})`;
+                }
             } else {
-                submitBtnText.innerText = `Enviar para Cozinha`;
+                if (tableCart.length === 0) {
+                    submitBtnText.innerText = `➕ Adicione produtos ao pedido`;
+                } else {
+                    submitBtnText.innerText = `Enviar para Cozinha (${tableCart.length} ${tableCart.length === 1 ? 'item' : 'itens'})`;
+                }
             }
         }
 
@@ -1974,7 +1982,10 @@ async function submitTableOrder() {
     }
 
     if (tableCart.length === 0) {
-        showToast('Adicione produtos ao pedido antes de enviar!', 'warning');
+        closeCartDrawer();
+        const activeOrder = selectedTable ? getActiveTableComanda(selectedTable, selectedComandaId) : null;
+        const nextRound = (activeOrder && (Number(activeOrder.roundsCount) || Number(activeOrder.round) || 1)) ? ((Number(activeOrder.roundsCount) || Number(activeOrder.round) || 1) + 1) : 1;
+        showToast(`Clique em "+ Adicionar" nos produtos do cardápio para montar a Rodada ${nextRound}!`, 'info');
         return;
     }
 

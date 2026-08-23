@@ -1378,7 +1378,14 @@ function submitOrder() {
 
         const message = buildOrderWhatsAppMessage(orderData);
         const url = `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(message)}`;
-        window.open(url, '_blank');
+        try {
+            const win = window.open(url, '_blank');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+                window.location.href = url;
+            }
+        } catch (e) {
+            window.location.href = url;
+        }
     }
 
     if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {

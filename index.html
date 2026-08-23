@@ -269,7 +269,7 @@
             </div>
             
             <div class="checkout-body">
-                <form id="checkoutForm" onsubmit="event.preventDefault(); submitOrder();">
+                <form id="checkoutForm" novalidate onsubmit="event.preventDefault(); submitOrder();">
                     <!-- Delivery / Pickup Toggle -->
                     <div class="checkout-type-selector">
                         <button type="button" id="deliveryTab" class="type-tab active" onclick="setCheckoutType('delivery')">
@@ -288,11 +288,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="clientName">Seu Nome *</label>
-                                <input type="text" id="clientName" placeholder="Como podemos te chamar?" required autocomplete="name">
+                                <input type="text" id="clientName" placeholder="Como podemos te chamar?" autocomplete="name">
                             </div>
                             <div class="form-group">
                                 <label for="clientPhone">WhatsApp com DDD *</label>
-                                <input type="tel" id="clientPhone" placeholder="(00) 00000-0000" required autocomplete="tel">
+                                <input type="tel" id="clientPhone" placeholder="(00) 00000-0000" autocomplete="tel">
                             </div>
                         </div>
                     </div>
@@ -312,18 +312,18 @@
                         <div class="form-row">
                             <div class="form-group flex-2">
                                 <label for="addressStreet">Rua / Logradouro *</label>
-                                <input type="text" id="addressStreet" placeholder="Ex: Av. Principal" required>
+                                <input type="text" id="addressStreet" placeholder="Ex: Av. Principal">
                             </div>
                             <div class="form-group flex-1">
                                 <label for="addressNumber">Número *</label>
-                                <input type="text" id="addressNumber" placeholder="Ex: 123" required>
+                                <input type="text" id="addressNumber" placeholder="Ex: 123">
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group flex-1">
                                 <label for="addressBairro">Bairro *</label>
-                                <select id="addressBairro" required onchange="onNeighborhoodChange()">
+                                <select id="addressBairro" onchange="onNeighborhoodChange()">
                                     <option value="" disabled selected>Selecione seu bairro</option>
                                     <option value="centro">Centro - Taxa a combinar</option>
                                 </select>
@@ -381,7 +381,7 @@
                             <span>Total a Pagar:</span>
                             <h4 id="checkoutTotalValue">R$ 0,00</h4>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-submit-order">
+                        <button type="button" class="btn btn-primary btn-submit-order" onclick="submitOrder()">
                             <span>Enviar Pedido para o WhatsApp</span>
                             <span class="material-symbols-rounded">send</span>
                         </button>
