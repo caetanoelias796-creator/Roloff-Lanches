@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>Roloff Lanches | Cardápio Digital &amp; Delivery</title>
+    <meta name="description" content="Peça os melhores lanches artesanais, porções crocantes e bebidas bem geladas. Ingredientes selecionados e entrega rápida. Faça seu pedido online!">
+    <meta name="keywords" content="hamburgueria, lanchonete, delivery lanches, x-salada, x-bacon, porções, batata frita, Roloff Lanches">
+    <meta name="author" content="Roloff Lanches">
+    
+    <!-- Open Graph (Facebook / WhatsApp) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Roloff Lanches - Cardápio Digital &amp; Delivery">
+    <meta property="og:description" content="Lanches artesanais, porções e bebidas! Faça seu pedido online de forma simples e rápida.">
+    <meta property="og:image" content="assets/hero_banner.jpg">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+    
+    <!-- Icons (Google Material Symbols) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    
+    <!-- CSS File -->
+    <link rel="stylesheet" href="index.css?v=2">
+    
+    <!-- PWA & Mobile Optimization -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#74112B">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+</head>
+<body>
+
+    <!-- Header & Hero Section -->
+    <header class="hero-section">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="header-top">
+                <div class="status-badge open" id="statusBadge">
+                    <span class="dot animate-pulse"></span>
+                    Aberto agora para pedidos
+                </div>
+            </div>
+            
+            <div class="pizzeria-brand-wrapper">
+                <img src="assets/logo.png" alt="Roloff Lanches Logo" class="pizzeria-logo" onerror="this.style.display='none'">
+                <h1 class="pizzeria-title" id="headerCompanyName">Roloff Lanches</h1>
+            </div>
+            <p class="pizzeria-subtitle" id="headerCompanySlogan">Lanches Artesanais | Porções | Bebidas</p>
+            
+            <div class="hero-slogan">
+                <span class="tag">Pão quentinho &amp; Carne suculenta</span>
+                <span class="tag bg-green">Ingredientes frescos</span>
+                <button id="promoBtn" class="promo-tag-btn blinking-btn" onclick="openPromoModal(true)" style="display: none;">
+                    <span class="material-symbols-rounded" style="font-size: 16px; margin-right: 4px; vertical-align: middle;">local_offer</span>
+                    Promoção do dia 🔥
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sticky Navigation & Filter Bar -->
+    <div class="sticky-nav-container">
+        <div class="container sticky-nav-wrapper">
+            <nav class="categories-nav" id="categoriesNav">
+                <a href="#lanches-section" class="nav-link active" onclick="setActiveCategoryTab(event, 'lanches-section')">🍔 Lanches</a>
+                <a href="#porcoes-section" class="nav-link" onclick="setActiveCategoryTab(event, 'porcoes-section')">🍟 Porções</a>
+                <a href="#bebidas-section" class="nav-link" onclick="setActiveCategoryTab(event, 'bebidas-section')">🥤 Bebidas</a>
+                <a href="#sobremesas-section" class="nav-link" onclick="setActiveCategoryTab(event, 'sobremesas-section')">🍰 Sobremesas</a>
+                <a href="garcom.html" class="nav-link" style="color: #f5a623; border: 1px solid rgba(245, 166, 35, 0.3); border-radius: 9999px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 4px;">
+                    <span class="material-symbols-rounded" style="font-size: 16px;">restaurant</span> Garçom
+                </a>
+            </nav>
+            
+            <div class="search-box">
+                <span class="material-symbols-rounded search-icon">search</span>
+                <input type="text" id="searchInput" placeholder="Buscar no cardápio..." oninput="onSearchInput()">
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <main class="main-container container">
+        
+        <!-- Menu Sections -->
+        <div class="menu-layout">
+            <div class="menu-items-section">
+                <!-- Section: Lanches -->
+                <section id="lanches-section" class="menu-category-section">
+                    <h2 class="category-title">🍔 Lanches &amp; Hambúrgueres</h2>
+                    <div class="items-grid" id="lanchesGrid">
+                        <!-- Dynamically filled by JS -->
+                    </div>
+                </section>
+
+                <!-- Section: Porções -->
+                <section id="porcoes-section" class="menu-category-section">
+                    <h2 class="category-title">🍟 Porções &amp; Petiscos</h2>
+                    <div class="items-grid" id="porcoesGrid">
+                        <!-- Dynamically filled by JS -->
+                    </div>
+                </section>
+
+                <!-- Section: Bebidas -->
+                <section id="bebidas-section" class="menu-category-section">
+                    <h2 class="category-title">🥤 Bebidas</h2>
+                    <div class="items-grid" id="bebidasGrid">
+                        <!-- Dynamically filled by JS -->
+                    </div>
+                </section>
+
+                <!-- Section: Sobremesas -->
+                <section id="sobremesas-section" class="menu-category-section">
+                    <h2 class="category-title">🍰 Sobremesas &amp; Doces</h2>
+                    <div class="items-grid" id="sobremesasGrid">
+                        <!-- Dynamically filled by JS -->
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Information -->
+    <footer class="footer-section">
+        <div class="container footer-content">
+            <div class="footer-brand">
+                <h2 id="footerCompanyName">Roloff Lanches</h2>
+                <p id="footerCompanySlogan">Lanches Artesanais | Porções | Bebidas</p>
+            </div>
+            <div class="footer-info">
+                <p id="footerAddress"><span class="material-symbols-rounded">location_on</span> Atendimento presencial &amp; Delivery</p>
+                <p id="footerCompanyPhone"><span class="material-symbols-rounded">phone</span> WhatsApp para pedidos</p>
+                <p id="footerHours"><span class="material-symbols-rounded">schedule</span> Terça a Domingo das 18h às 23h30</p>
+            </div>
+        </div>
+        <div class="footer-bottom text-center">
+            <p>&copy; 2026 Roloff Lanches - Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Floating Cart Button (Mobile) -->
+    <button class="floating-cart-btn" id="floatingCartBtn" onclick="toggleCart(true)">
+        <span class="material-symbols-rounded">shopping_basket</span>
+        <span class="cart-badge animate-bounce" id="cartCountBadge">0</span>
+    </button>
+
+    <!-- Cart Sidebar / Drawer -->
+    <div class="cart-drawer-overlay" id="cartOverlay" onclick="toggleCart(false)"></div>
+    <aside class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <div class="cart-title-wrapper">
+                <span class="material-symbols-rounded">shopping_basket</span>
+                <h2>Seu Pedido</h2>
+            </div>
+            <button class="btn-close" onclick="toggleCart(false)">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+        </div>
+
+        <!-- Empty Cart State -->
+        <div class="cart-empty-state" id="cartEmptyState">
+            <span class="material-symbols-rounded empty-icon">shopping_bag</span>
+            <p>Seu carrinho está vazio.</p>
+            <p class="subtext">Adicione algumas delícias do nosso cardápio!</p>
+        </div>
+
+        <!-- Filled Cart Content -->
+        <div class="cart-content" id="cartContent">
+            <div class="cart-items" id="cartItemsList">
+                <!-- Dynamically filled by JS -->
+            </div>
+            
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="cartSubtotal">R$ 0,00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Taxa de Entrega</span>
+                    <span id="cartDeliveryFee">Grátis</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total</span>
+                    <span id="cartTotal">R$ 0,00</span>
+                </div>
+                
+                <button class="btn btn-primary btn-block checkout-btn" onclick="openCheckoutModal()">
+                    <span>Finalizar Pedido</span>
+                    <span class="material-symbols-rounded">arrow_forward</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Product Customizer / Adicionais Modal -->
+    <div class="modal-overlay" id="customizerModal">
+        <div class="modal-card">
+            <div class="modal-header-image">
+                <img id="customizerHeaderImg" src="assets/lanches_hero.jpg" alt="Personalizar Item">
+                <button class="btn-close-circle" onclick="closeProductCustomizer()">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+                <div class="modal-header-badge">Personalizar</div>
+            </div>
+            
+            <div class="modal-body">
+                <h2 id="customizerTitle">Personalizar Lanche</h2>
+                <p class="customizer-desc" id="customizerDesc">Escolha os adicionais e observações para o seu lanche.</p>
+                
+                <form id="productCustomizerForm" onsubmit="event.preventDefault()">
+                    <!-- Step: Adicionais -->
+                    <div class="customizer-section" id="adicionaisSection">
+                        <div class="section-title">
+                            <span class="number">1</span>
+                            <h3>Adicionais e Opcionais</h3>
+                            <span class="badge">Opcional</span>
+                        </div>
+                        <div class="adicionais-list" id="customizerAdicionaisList">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Step: Observações -->
+                    <div class="customizer-section">
+                        <div class="section-title">
+                            <span class="number">2</span>
+                            <h3>Observações do Item</h3>
+                            <span class="badge">Opcional</span>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="itemCustomNotes" placeholder="Ex: Sem cebola, ponto da carne bem passada, sem maionese..." rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <div class="customizer-quantity">
+                    <button type="button" class="btn-qty" onclick="adjustCustomizerQty(-1)">
+                        <span class="material-symbols-rounded">remove</span>
+                    </button>
+                    <span id="customizerQty" class="qty-number">1</span>
+                    <button type="button" class="btn-qty" onclick="adjustCustomizerQty(1)">
+                        <span class="material-symbols-rounded">add</span>
+                    </button>
+                </div>
+                <button type="button" class="btn btn-primary btn-add-order" id="btnAddToOrder" onclick="addCustomizedProductToCart()">
+                    <span class="material-symbols-rounded">add_shopping_cart</span>
+                    Adicionar ao Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal-overlay" id="checkoutModal">
+        <div class="modal-card checkout-card">
+            <div class="checkout-header">
+                <h2>Finalizar Pedido</h2>
+                <button class="btn-close-circle" onclick="closeCheckoutModal()">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            
+            <div class="checkout-body">
+                <form id="checkoutForm" onsubmit="event.preventDefault(); submitOrder();">
+                    <!-- Delivery / Pickup Toggle -->
+                    <div class="checkout-type-selector">
+                        <button type="button" id="deliveryTab" class="type-tab active" onclick="setCheckoutType('delivery')">
+                            <span class="material-symbols-rounded">moped</span>
+                            <span>Entrega (Delivery)</span>
+                        </button>
+                        <button type="button" id="pickupTab" class="type-tab" onclick="setCheckoutType('pickup')">
+                            <span class="material-symbols-rounded">store</span>
+                            <span>Retirada no Balcão</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Customer Data -->
+                    <div class="checkout-section">
+                        <h3>Seus Dados</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="clientName">Seu Nome *</label>
+                                <input type="text" id="clientName" placeholder="Como podemos te chamar?" required autocomplete="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="clientPhone">WhatsApp com DDD *</label>
+                                <input type="tel" id="clientPhone" placeholder="(00) 00000-0000" required autocomplete="tel">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Address Data (Delivery only) -->
+                    <div class="checkout-section" id="addressSection">
+                        <h3>Endereço de Entrega</h3>
+                        
+                        <div class="location-btn-wrapper" style="margin-bottom: 12px;">
+                            <button type="button" id="btnGetLocation" class="btn-get-location" onclick="captureCustomerLocation()">
+                                <span class="material-symbols-rounded" style="font-size: 18px;">my_location</span>
+                                <span>📍 USAR MINHA LOCALIZAÇÃO ATUAL</span>
+                            </button>
+                            <div id="locationStatus" class="location-status" style="display: none;"></div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group flex-2">
+                                <label for="addressStreet">Rua / Logradouro *</label>
+                                <input type="text" id="addressStreet" placeholder="Ex: Av. Principal" required>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="addressNumber">Número *</label>
+                                <input type="text" id="addressNumber" placeholder="Ex: 123" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="addressBairro">Bairro *</label>
+                                <select id="addressBairro" required onchange="onNeighborhoodChange()">
+                                    <option value="" disabled selected>Selecione seu bairro</option>
+                                    <option value="centro">Centro - Taxa a combinar</option>
+                                </select>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="addressRef">Ponto de Referência</label>
+                                <input type="text" id="addressRef" placeholder="Ex: Ao lado do mercado...">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Methods -->
+                    <div class="checkout-section">
+                        <h3>Forma de Pagamento</h3>
+                        <div class="payment-options">
+                            <label class="payment-card">
+                                <input type="radio" name="payment-method" value="pix" checked onchange="togglePaymentFields()">
+                                <div class="payment-content">
+                                    <span class="material-symbols-rounded">qr_code_2</span>
+                                    <span>Pix (Instantâneo)</span>
+                                </div>
+                            </label>
+                            
+                            <label class="payment-card">
+                                <input type="radio" name="payment-method" value="card" onchange="togglePaymentFields()">
+                                <div class="payment-content">
+                                    <span class="material-symbols-rounded">credit_card</span>
+                                    <span>Cartão (Maquininha)</span>
+                                </div>
+                            </label>
+                            
+                            <label class="payment-card">
+                                <input type="radio" name="payment-method" value="cash" onchange="togglePaymentFields()">
+                                <div class="payment-content">
+                                    <span class="material-symbols-rounded">payments</span>
+                                    <span>Dinheiro</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <!-- Change for cash -->
+                        <div class="form-group display-none" id="cashChangeGroup" style="margin-top: 10px;">
+                            <label for="cashChange">Precisa de troco para quanto?</label>
+                            <input type="text" id="cashChange" placeholder="Ex: R$ 50,00 ou Não preciso">
+                        </div>
+
+                        <div class="pix-info display-none" id="pixInstructions" style="margin-top: 10px;">
+                            <p>A chave Pix será informada no momento da confirmação do pedido.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit -->
+                    <div class="checkout-footer">
+                        <div class="checkout-total">
+                            <span>Total a Pagar:</span>
+                            <h4 id="checkoutTotalValue">R$ 0,00</h4>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-submit-order">
+                            <span>Enviar Pedido para o WhatsApp</span>
+                            <span class="material-symbols-rounded">send</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Promo Popup Modal -->
+    <div class="modal-overlay" id="promoModal">
+        <div class="modal-card promo-card">
+            <div class="promo-header">
+                <span class="material-symbols-rounded promo-icon">local_fire_department</span>
+                <h3>Promoção do Dia!</h3>
+                <button class="btn-close-circle" onclick="closePromoModal()">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="promo-modal-body">
+                <p>Confira nossos combos e ofertas especiais nas redes sociais!</p>
+            </div>
+            <div class="promo-modal-footer">
+                <button class="btn btn-primary" onclick="closePromoModal()" style="width: 100%; justify-content: center;">Ver Cardápio</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Fixed Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav">
+        <a href="#" class="bottom-nav-item active" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">
+            <span class="material-symbols-rounded">home</span>
+            <span>Início</span>
+        </a>
+        <a href="#lanches-section" class="bottom-nav-item" onclick="setActiveCategoryTab(event, 'lanches-section'); return false;">
+            <span class="material-symbols-rounded">lunch_dining</span>
+            <span>Cardápio</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="toggleCart(true); return false;">
+            <div class="bottom-nav-icon-wrapper">
+                <span class="material-symbols-rounded">shopping_bag</span>
+                <span class="bottom-nav-badge cart-badge-count">0</span>
+            </div>
+            <span>Carrinho</span>
+        </a>
+        <a href="garcom.html" class="bottom-nav-item">
+            <span class="material-symbols-rounded">restaurant</span>
+            <span>Garçom</span>
+        </a>
+    </nav>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Global Loading Overlay -->
+    <div id="globalLoading" class="global-loading-overlay display-none">
+        <div class="loading-spinner-wrapper">
+            <div class="loading-spinner"></div>
+            <span id="loadingText">Carregando...</span>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Compat version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+
+    <!-- Marketing Tracking Module -->
+    <script src="TrackingService.js?v=1"></script>
+
+    <!-- Core App Logic -->
+    <script src="app.js?v=1"></script>
+
+    <!-- PWA Master Initializer -->
+    <script src="pwa/pwa-init.js" defer></script>
+</body>
+</html>

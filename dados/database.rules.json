@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "menu": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "orders": {
+      ".read": true,
+      ".write": true
+    },
+    "tables": {
+      ".read": true,
+      ".write": true
+    },
+    "status": {
+      ".read": true,
+      ".write": "auth != null"
+    }
+  }
+}
