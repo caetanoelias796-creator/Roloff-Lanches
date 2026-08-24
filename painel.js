@@ -200,38 +200,28 @@ function checkAuthentication() {
     if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
-                console.log("✅ Firebase Auth verificado com sucesso!");
+                console.log("✅ Firebase Auth: Usuário autenticado verificado!");
                 console.log("• User UID:", user.uid);
                 console.log("• User Email:", user.email);
-                console.log("• Database URL:", firebase.app().options?.databaseURL);
                 
-                sessionStorage.setItem('painel_authenticated', 'true');
                 if (loginOverlay) loginOverlay.style.display = 'none';
                 if (dashboardWrapper) dashboardWrapper.style.display = 'grid';
                 
                 if (!appStarted) {
                     startApp();
                 } else {
-                    // Re-attach realtime listeners with authenticated auth socket
                     setupFirebaseRealtime();
                 }
             } else {
-                console.log("🔒 Nenhum usuário autenticado no Firebase Auth. Aguardando login...");
-                sessionStorage.removeItem('painel_authenticated');
+                console.log("🔒 Firebase Auth: Nenhum usuário autenticado. Exibindo tela de login...");
                 if (loginOverlay) loginOverlay.style.display = 'flex';
                 if (dashboardWrapper) dashboardWrapper.style.display = 'none';
             }
         });
     } else {
-        const isAuthenticated = sessionStorage.getItem('painel_authenticated') === 'true';
-        if (isAuthenticated) {
-            if (loginOverlay) loginOverlay.style.display = 'none';
-            if (dashboardWrapper) dashboardWrapper.style.display = 'grid';
-            startApp();
-        } else {
-            if (loginOverlay) loginOverlay.style.display = 'flex';
-            if (dashboardWrapper) dashboardWrapper.style.display = 'none';
-        }
+        console.error("❌ Firebase Auth não encontrado.");
+        if (loginOverlay) loginOverlay.style.display = 'flex';
+        if (dashboardWrapper) dashboardWrapper.style.display = 'none';
     }
 }
 
@@ -263,95 +253,78 @@ function handleLoginSubmit(event) {
     const errorDiv = document.getElementById('loginError');
     
     const email = emailInput ? emailInput.value.trim() : '';
-    const inputPass = passwordInput ? passwordInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value : '';
     
-    if (!email || !inputPass) {
-        showToast('Preencha o e-mail e a senha!', 'warning');
+    if (!email || !password) {
+        showToast('Informe seu e-mail e senha para acessar.', 'warning');
         return;
     }
-
-    // Chave mestra administrativa e UID autorizado para contingência
-    const isMasterPass = (
-        inputPass === 'OA2cxhpPbXge9t3mkvTNVwsgiEo1' ||
-        email === 'OA2cxhpPbXge9t3mkvTNVwsgiEo1' ||
-        inputPass === 'roloff2026' || 
-        inputPass === 'roloff123' || 
-        inputPass === 'admin123'
-    );
     
-    showLoading('Verificando credenciais...');
+    showLoading('Autenticando no Firebase...');
+    if (errorDiv) errorDiv.classList.add('display-none');
     
     if (typeof firebase !== 'undefined' && firebase.auth) {
-        firebase.auth().signInWithEmailAndPassword(email, inputPass)
-        .then((userCredential) => {
-            hideLoading();
-            const user = userCredential.user;
-            console.log("✅ Firebase Auth: Login efetuado com sucesso!", user?.email);
-            
-            sessionStorage.setItem('painel_authenticated', 'true');
-            if (errorDiv) errorDiv.classList.add('display-none');
-            const loginOverlay = document.getElementById('loginOverlay');
-            const dashboardWrapper = document.querySelector('.dashboard-wrapper');
-            if (loginOverlay) loginOverlay.style.display = 'none';
-            if (dashboardWrapper) dashboardWrapper.style.display = 'grid';
-            startApp();
-            showToast('Acesso autorizado ao painel!', 'success');
-        })
-        .catch((err) => {
-            console.error("Erro Firebase Auth:", err.code, err.message);
-            
-            // Se utilizou senha mestra administrativa de contingência
-            if (isMasterPass) {
+        firebase.auth().signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
                 hideLoading();
-                console.log("🔓 Acesso liberado via Chave Mestra Administrativa!");
-                sessionStorage.setItem('painel_authenticated', 'true');
+                const user = userCredential.user;
+                console.log("✅ Firebase Auth: Login efetuado com sucesso!", user?.email);
                 if (errorDiv) errorDiv.classList.add('display-none');
-                const loginOverlay = document.getElementById('loginOverlay');
-                const dashboardWrapper = document.querySelector('.dashboard-wrapper');
-                if (loginOverlay) loginOverlay.style.display = 'none';
-                if (dashboardWrapper) dashboardWrapper.style.display = 'grid';
-                startApp();
-                showToast('Acesso liberado (Modo Administrador)!', 'success');
-                return;
-            }
-
-            hideLoading();
-            let msg = 'E-mail ou senha incorretos!';
-            if (err.code === 'auth/unauthorized-domain') {
-                msg = 'Domínio GitHub não autorizado no Firebase Console! Use a senha mestra: roloff2026';
-            } else if (err.code === 'auth/user-not-found') {
-                msg = 'Usuário não cadastrado no Firebase Auth. Verifique o e-mail ou use a senha mestra: roloff2026';
-            } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-                msg = 'Senha incorreta para este e-mail. (Senha mestra alternativa: roloff2026)';
-            } else if (err.code === 'auth/too-many-requests') {
-                msg = 'Muitas tentativas. Aguarde um minuto ou use a senha mestra: roloff2026';
-            } else if (err.code === 'auth/invalid-email') {
-                msg = 'Formato de e-mail inválido.';
-            }
-
-            if (errorDiv) {
-                errorDiv.innerHTML = `<span class="material-symbols-rounded">error</span> ${msg}`;
-                errorDiv.classList.remove('display-none');
-            }
-            passwordInput.value = '';
-            passwordInput.focus();
-            showToast(msg, 'error', 6000);
-        });
+                showToast('Acesso autorizado!', 'success');
+            })
+            .catch((err) => {
+                hideLoading();
+                console.error("❌ Erro Firebase Auth:", err.code, err.message);
+                
+                let msg = 'E-mail ou senha incorretos.';
+                switch (err.code) {
+                    case 'auth/user-not-found':
+                        msg = 'Usuário não encontrado no Firebase Authentication.';
+                        break;
+                    case 'auth/wrong-password':
+                        msg = 'Senha incorreta.';
+                        break;
+                    case 'auth/invalid-credential':
+                        msg = 'E-mail ou senha inválidos.';
+                        break;
+                    case 'auth/invalid-email':
+                        msg = 'E-mail inválido.';
+                        break;
+                    case 'auth/too-many-requests':
+                        msg = 'Muitas tentativas. Aguarde alguns minutos.';
+                        break;
+                    case 'auth/network-request-failed':
+                        msg = 'Não foi possível conectar ao Firebase. Verifique sua internet.';
+                        break;
+                    case 'auth/unauthorized-domain':
+                        msg = 'Este domínio ainda não está autorizado no Firebase Authentication.';
+                        break;
+                    case 'auth/user-disabled':
+                        msg = 'Esta conta de usuário foi desativada no Firebase.';
+                        break;
+                    default:
+                        msg = err.message || 'Falha ao autenticar no Firebase Authentication.';
+                        break;
+                }
+                
+                if (errorDiv) {
+                    errorDiv.innerHTML = `<span class="material-symbols-rounded">error</span> ${msg}`;
+                    errorDiv.classList.remove('display-none');
+                }
+                if (passwordInput) {
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+                showToast(msg, 'error', 6000);
+            });
     } else {
         hideLoading();
-        if (isMasterPass) {
-            sessionStorage.setItem('painel_authenticated', 'true');
-            if (errorDiv) errorDiv.classList.add('display-none');
-            const loginOverlay = document.getElementById('loginOverlay');
-            const dashboardWrapper = document.querySelector('.dashboard-wrapper');
-            if (loginOverlay) loginOverlay.style.display = 'none';
-            if (dashboardWrapper) dashboardWrapper.style.display = 'grid';
-            startApp();
-            showToast('Acesso liberado!', 'success');
-        } else {
-            if (errorDiv) errorDiv.classList.remove('display-none');
-            showToast('Serviço de autenticação indisponível.', 'error');
+        const msg = 'Serviço Firebase Auth indisponível no navegador. Recarregue a página.';
+        if (errorDiv) {
+            errorDiv.innerHTML = `<span class="material-symbols-rounded">error</span> ${msg}`;
+            errorDiv.classList.remove('display-none');
         }
+        showToast(msg, 'error', 6000);
     }
 }
 
@@ -359,18 +332,21 @@ function handleLogout(event) {
     if (event) event.preventDefault();
     if (confirm("Deseja realmente sair do painel do Roloff Lanches?")) {
         showLoading('Encerrando sessão...');
-        sessionStorage.removeItem('painel_authenticated');
         if (typeof firebase !== 'undefined' && firebase.auth) {
             firebase.auth().signOut()
-            .then(() => {
-                hideLoading();
-                window.location.reload();
-            })
-            .catch(err => {
-                hideLoading();
-                console.error("Erro ao fazer logout:", err);
-                window.location.reload();
-            });
+                .then(() => {
+                    hideLoading();
+                    const loginOverlay = document.getElementById('loginOverlay');
+                    const dashboardWrapper = document.querySelector('.dashboard-wrapper');
+                    if (loginOverlay) loginOverlay.style.display = 'flex';
+                    if (dashboardWrapper) dashboardWrapper.style.display = 'none';
+                    showToast('Sessão encerrada com sucesso.', 'info');
+                })
+                .catch(err => {
+                    hideLoading();
+                    console.error("Erro ao fazer logout:", err);
+                    window.location.reload();
+                });
         } else {
             hideLoading();
             window.location.reload();
