@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    Firebase Initialization
    ========================================================================== */
 if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebase.apps && firebase.apps.length === 0) {
@@ -2373,9 +2373,9 @@ const DEFAULT_MENU_DATA = {
                                            "badge":  "Top",
                                            "available":  true,
                                             "adicionais": {
-                                                "maionese": { "name": "Maionese", "price": 0.0 },
-                                                "mostarda": { "name": "Mostarda", "price": 0.0 },
-                                                "ketchup": { "name": "Ketchup", "price": 0.0 }
+                                                "sache_maionese": { "name": "Sache Maionese", "price": 0.0 },
+                                                "sache_mostarda": { "name": "Sache Mostarda", "price": 0.0 },
+                                                "sache_ketchup": { "name": "Sache Ketchup", "price": 0.0 }
                                             }
                                        },
                                        {
@@ -3014,35 +3014,19 @@ const DEFAULT_MENU_DATA = {
                                           }
                                       ]
                    },
-    "adicionais":  {
-                       "hamburguer_extra":  {
-                                                "name":  "Hambúrguer Extra 140g",
-                                                "price":  8.0
-                                            },
-                       "bacon_extra":  {
-                                           "name":  "Fatias de Bacon Extra",
-                                           "price":  6.0
-                                       },
-                       "queijo_extra":  {
-                                            "name":  "Queijo Extra",
-                                            "price":  5.0
-                                        },
-                       "catupiry_extra":  {
-                                              "name":  "Catupiry Original Extra",
-                                              "price":  5.0
-                                          },
-                       "ovo_extra":  {
-                                         "name":  "Ovo Frito Extra",
-                                         "price":  3.0
-                                     },
-                       "batata_palha_extra":  {
-                                                  "name":  "Porção Extra de Batata Palha",
-                                                  "price":  4.0
-                                              },
-                       "maionese_pote":  {
-                                             "name":  "Pote de Maionese da Casa (50g)",
-                                             "price":  4.0
-                                         }
+    "adicionais": {
+                       "sache_maionese": {
+                           "name": "Sache Maionese",
+                           "price": 0.0
+                       },
+                       "sache_mostarda": {
+                           "name": "Sache Mostarda",
+                           "price": 0.0
+                       },
+                       "sache_ketchup": {
+                           "name": "Sache Ketchup",
+                           "price": 0.0
+                       }
                    },
     "settings":  {
                      "companyName":  "Roloff Lanches",
@@ -5134,6 +5118,7 @@ function performCentralAutoBackgroundBackup() {
         console.warn("Erro no auto-backup centralizado:", e);
     }
 }
+
 
 
 

@@ -2188,9 +2188,40 @@ async function submitTableOrder() {
         }
         if (successMsg) {
             if (isContinuingComanda) {
-                successMsg.innerHTML = `Novos itens enviados para <strong>${finalClientName}</strong> na <strong>${formattedTableName}</strong>.<br><br><strong>Total da Comanda: R$ ${finalComandaTotal.toFixed(2).replace('.', ',')}</strong> (${newRoundNum}ª rodada)<br><span style="color: var(--text-muted); font-size: 13px;">Total Geral da Mesa: R$ ${updatedCombinedTableTotal.toFixed(2).replace('.', ',')}</span>`;
+                successMsg.innerHTML = `
+                    <div class="success-order-desc">
+                        Novos itens enviados para <strong>${finalClientName}</strong> na <strong>${formattedTableName}</strong>.
+                    </div>
+                    <div class="success-summary-card">
+                        <div class="success-summary-row primary-row">
+                            <span class="summary-name">Total da Comanda:</span>
+                            <span class="summary-price">R$ ${finalComandaTotal.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                        <div class="success-round-badge">${newRoundNum}ª rodada enviada</div>
+                        <div class="success-summary-divider"></div>
+                        <div class="success-summary-row secondary-row">
+                            <span class="summary-name">Total Geral da Mesa:</span>
+                            <span class="summary-price-muted">R$ ${updatedCombinedTableTotal.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    </div>
+                `;
             } else {
-                successMsg.innerHTML = `Comanda <strong>${finalClientName}</strong> aberta na <strong>${formattedTableName}</strong> e enviada para a cozinha.<br><br><strong>Total da Comanda: R$ ${finalComandaTotal.toFixed(2).replace('.', ',')}</strong><br><span style="color: var(--text-muted); font-size: 13px;">Total Geral da Mesa: R$ ${updatedCombinedTableTotal.toFixed(2).replace('.', ',')}</span>`;
+                successMsg.innerHTML = `
+                    <div class="success-order-desc">
+                        Comanda <strong>${finalClientName}</strong> aberta na <strong>${formattedTableName}</strong> e enviada para a cozinha.
+                    </div>
+                    <div class="success-summary-card">
+                        <div class="success-summary-row primary-row">
+                            <span class="summary-name">Total da Comanda:</span>
+                            <span class="summary-price">R$ ${finalComandaTotal.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                        <div class="success-summary-divider"></div>
+                        <div class="success-summary-row secondary-row">
+                            <span class="summary-name">Total Geral da Mesa:</span>
+                            <span class="summary-price-muted">R$ ${updatedCombinedTableTotal.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    </div>
+                `;
             }
         }
 

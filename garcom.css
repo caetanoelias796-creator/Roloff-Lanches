@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Roloff Lanches - MÃ³dulo GarÃ§om & Atendimento de SalÃ£o
    Identidade Visual: BordÃ´ (#74112B) + Dourado (#DCA744) + Branco (#FFFFFF / #FAF8F5)
    ========================================================================== */
@@ -1295,6 +1295,212 @@ input, textarea, select {
 }
 
 /* ==========================================================================
+   Modal de Sucesso / Confirmação de Envio (Garçom)
+   ========================================================================== */
+.modal-box.success-modal-box {
+    max-width: 440px;
+    width: 100%;
+    margin: auto;
+    padding: 28px 24px 22px;
+    background: #FFFFFF;
+    border: 1.5px solid var(--border-gold);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 20px 50px rgba(116, 17, 43, 0.28), 0 0 0 1px rgba(220, 167, 68, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    height: auto;
+    max-height: 90vh;
+}
+
+.modal-box.success-modal-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #74112B 0%, #DCA744 50%, #74112B 100%);
+}
+
+.success-icon-wrapper {
+    width: 66px;
+    height: 66px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px auto 14px;
+    box-shadow: 0 8px 22px rgba(46, 125, 50, 0.35);
+    border: 3px solid #E8F5E9;
+    flex-shrink: 0;
+}
+
+.success-icon-wrapper .material-symbols-rounded {
+    font-size: 38px;
+    color: #FFFFFF;
+    line-height: 1;
+}
+
+#successOrderTitle {
+    font-size: 21px;
+    font-weight: 900;
+    color: var(--primary);
+    margin: 0 0 10px;
+    line-height: 1.25;
+    letter-spacing: -0.3px;
+    width: 100%;
+}
+
+.success-message-container {
+    width: 100%;
+}
+
+.success-order-desc {
+    font-size: 14px;
+    color: var(--text-body);
+    line-height: 1.45;
+    margin-bottom: 14px;
+}
+
+.success-order-desc strong {
+    color: var(--primary);
+    font-weight: 800;
+}
+
+.success-summary-card {
+    background: #FAF6F0;
+    border: 1px solid rgba(220, 167, 68, 0.35);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    width: 100%;
+    margin-bottom: 18px;
+    text-align: left;
+    box-shadow: inset 0 1px 3px rgba(116, 17, 43, 0.03);
+}
+
+.success-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+}
+
+.success-summary-row .summary-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.success-summary-row.primary-row .summary-name {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.success-summary-row .summary-price {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--primary);
+}
+
+.success-summary-row .summary-price-muted {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.success-round-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-gold-dark);
+    background: rgba(220, 167, 68, 0.16);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    margin-top: 2px;
+    margin-bottom: 4px;
+}
+
+.success-summary-divider {
+    height: 1px;
+    background: rgba(116, 17, 43, 0.08);
+    margin: 8px 0;
+    border-bottom: 1px dashed rgba(220, 167, 68, 0.35);
+}
+
+.success-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.btn-success-action {
+    width: 100%;
+    padding: 13px 18px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+    letter-spacing: 0.2px;
+}
+
+.btn-success-action.primary {
+    background: var(--primary-gradient);
+    color: #FFFFFF;
+    box-shadow: 0 4px 14px rgba(116, 17, 43, 0.32);
+    border: 1px solid rgba(220, 167, 68, 0.35);
+}
+
+.btn-success-action.primary .material-symbols-rounded {
+    color: var(--accent-gold);
+    font-size: 20px;
+    transition: transform 0.25s ease;
+}
+
+.btn-success-action.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(116, 17, 43, 0.42);
+    background: linear-gradient(135deg, #9E1A3C 0%, #80122E 100%);
+}
+
+.btn-success-action.primary:hover .material-symbols-rounded {
+    transform: rotate(-45deg);
+}
+
+.btn-success-action.secondary {
+    background: #FFFFFF;
+    color: var(--primary);
+    border: 1.5px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-success-action.secondary .material-symbols-rounded {
+    color: var(--primary);
+    font-size: 20px;
+}
+
+.btn-success-action.secondary:hover {
+    background: #FDF4F5;
+    border-color: var(--primary);
+    color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ==========================================================================
    7. MEDIA QUERIES (RESPONSIVIDADE MOBILE & DESKTOP)
    ========================================================================== */
 @media (max-width: 768px) {
@@ -1326,5 +1532,16 @@ input, textarea, select {
 @media (max-width: 480px) {
     .tables-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+    .modal-box.success-modal-box {
+        padding: 22px 18px 18px;
+        border-radius: var(--radius-lg);
+    }
+    #successOrderTitle {
+        font-size: 19px;
+    }
+    .btn-success-action {
+        font-size: 13.5px;
+        padding: 12px 14px;
     }
 }
