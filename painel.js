@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    Firebase Initialization
    ========================================================================== */
 if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebase.apps && firebase.apps.length === 0) {
@@ -2371,7 +2371,12 @@ const DEFAULT_MENU_DATA = {
                                            "category":  "lanches",
                                            "price":  18.0,
                                            "badge":  "Top",
-                                           "available":  true
+                                           "available":  true,
+                                            "adicionais": {
+                                                "maionese": { "name": "Maionese", "price": 0.0 },
+                                                "mostarda": { "name": "Mostarda", "price": 0.0 },
+                                                "ketchup": { "name": "Ketchup", "price": 0.0 }
+                                            }
                                        },
                                        {
                                            "id":  "cachorro_calabresa",
@@ -3063,8 +3068,10 @@ const DEFAULT_MENU_DATA = {
 };
 
 /* ==========================================================================
-   Menu Manager Functions
+   Menu & Products Manager (Lanchonete Dynamic Catalog)
    ========================================================================== */
+let activeMenuCategory = 'todos';
+
 function switchSection(section) {
     currentSection = section;
     const btnNavOrders = document.getElementById('btnNavOrders');
@@ -3105,7 +3112,6 @@ function switchSection(section) {
         if (btnNavMenu) btnNavMenu.classList.add('active');
         if (sectionMenu) {
             sectionMenu.classList.remove('display-none');
-            
             if (!menuData) {
                 initMenuSync();
             } else {
@@ -3127,47 +3133,6 @@ function switchSection(section) {
     }
 }
 
-function setMenuTab(tab) {
-    currentMenuTab = tab;
-    const tabFlavors = document.getElementById('tabFlavors');
-    const tabPrices = document.getElementById('tabPrices');
-    const tabSimpleItems = document.getElementById('tabSimpleItems');
-    const tabPromo = document.getElementById('tabPromo');
-    
-    const menuTabFlavors = document.getElementById('menuTabFlavors');
-    const menuTabPrices = document.getElementById('menuTabPrices');
-    const menuTabSimpleItems = document.getElementById('menuTabSimpleItems');
-    const menuTabPromo = document.getElementById('menuTabPromo');
-    
-    // Reset active tab class
-    if (tabFlavors) tabFlavors.classList.remove('active');
-    if (tabPrices) tabPrices.classList.remove('active');
-    if (tabSimpleItems) tabSimpleItems.classList.remove('active');
-    if (tabPromo) tabPromo.classList.remove('active');
-    
-    // Hide all tab contents
-    if (menuTabFlavors) menuTabFlavors.classList.add('display-none');
-    if (menuTabPrices) menuTabPrices.classList.add('display-none');
-    if (menuTabSimpleItems) menuTabSimpleItems.classList.add('display-none');
-    if (menuTabPromo) menuTabPromo.classList.add('display-none');
-    
-    if (tab === 'flavors') {
-        if (tabFlavors) tabFlavors.classList.add('active');
-        if (menuTabFlavors) menuTabFlavors.classList.remove('display-none');
-    } else if (tab === 'prices') {
-        if (tabPrices) tabPrices.classList.add('active');
-        if (menuTabPrices) menuTabPrices.classList.remove('display-none');
-    } else if (tab === 'simpleItems') {
-        if (tabSimpleItems) tabSimpleItems.classList.add('active');
-        if (menuTabSimpleItems) menuTabSimpleItems.classList.remove('display-none');
-        renderSimpleItemsList();
-    } else if (tab === 'promo') {
-        if (tabPromo) tabPromo.classList.add('active');
-        if (menuTabPromo) menuTabPromo.classList.remove('display-none');
-        loadPromoConfigIntoUI();
-    }
-}
-
 let trackingSettingsListenerAttached = false;
 
 function setupTrackingSettingsRealtime() {
@@ -3177,10 +3142,6 @@ function setupTrackingSettingsRealtime() {
     const trackingRef = firebase.database().ref('menu/settings/tracking');
     trackingRef.on('value', (snapshot) => {
         const tracking = snapshot.val();
-
-        // If the dedicated tracking node exists, it is the source of truth for
-        // the marketing settings. This prevents a stale /menu snapshot from
-        // resetting Google Ads after a page refresh.
         if (!tracking || typeof tracking !== 'object') return;
 
         if (!menuData) menuData = {};
@@ -3199,7 +3160,6 @@ function setupTrackingSettingsRealtime() {
 }
 
 function initMenuSync() {
-    // Render default menu data immediately as a fallback.
     menuData = DEFAULT_MENU_DATA;
     renderMenuManager();
 
@@ -3209,10 +3169,7 @@ function initMenuSync() {
         const menuRef = firebase.database().ref('menu');
         menuRef.on('value', (snapshot) => {
             const data = snapshot.val();
-            if (data) {
-                // Preserve a tracking block already confirmed by the dedicated
-                // /menu/settings/tracking listener. This avoids a stale /menu
-                // snapshot from putting Google Ads back into the default state.
+            if (data && typeof data === 'object') {
                 const confirmedTracking = menuData?.settings?.tracking;
                 menuData = data;
                 if (confirmedTracking && typeof confirmedTracking === 'object') {
@@ -3224,22 +3181,25 @@ function initMenuSync() {
                 }
                 renderMenuManager();
             } else {
-                console.log("Banco de dados do cardápio vazio. Semeando valores padrão do painel...");
+                console.log("Banco de dados do cardÃ¡pio vazio. Semeando valores padrÃ£o do painel...");
                 firebase.database().ref('menu').set(DEFAULT_MENU_DATA)
-                .then(() => console.log("Cardápio semeado com sucesso a partir do painel."))
-                .catch(err => console.error("Erro ao semear cardápio a partir do painel:", err));
+                .then(() => console.log("CardÃ¡pio semeado com sucesso a partir do painel."))
+                .catch(err => console.error("Erro ao semear cardÃ¡pio a partir do painel:", err));
             }
         });
     } else {
-        // Fallback local - FETCH from local API
         fetch('/api/menu')
             .then(res => res.json())
             .then(data => {
-                menuData = data;
+                if (data && typeof data === 'object') {
+                    menuData = data;
+                } else {
+                    menuData = DEFAULT_MENU_DATA;
+                }
                 renderMenuManager();
             })
             .catch(err => {
-                console.error("Erro ao buscar cardápio local, usando DEFAULT_MENU_DATA:", err);
+                console.error("Erro ao buscar cardÃ¡pio local, usando DEFAULT_MENU_DATA:", err);
                 menuData = DEFAULT_MENU_DATA;
                 renderMenuManager();
             });
@@ -3248,75 +3208,176 @@ function initMenuSync() {
 
 function renderMenuManager() {
     if (!menuData) return;
+    renderCategoryFilterTabs();
+    renderProductsList();
+    renderAdicionaisList();
+    loadPromoConfigIntoUI();
     
-    renderFlavorsList();
-    renderPricesMatrix();
-    renderBordersTable();
-    
-    // Update settings dashboard if active
     if (typeof renderSettingsDashboard === 'function') {
         renderSettingsDashboard();
     }
 }
 
-function renderFlavorsList() {
-    const grid = document.getElementById('flavorsListGrid');
+function getCategoryDisplayName(catKey) {
+    const names = {
+        'lanches': 'Lanches & PastÃ©is',
+        'porcoes': 'PorÃ§Ãµes & Petiscos',
+        'bebidas': 'Bebidas & Chopp',
+        'sobremesas': 'Sobremesas',
+        'adicionais': 'Adicionais'
+    };
+    if (names[catKey]) return names[catKey];
+    return catKey.charAt(0).toUpperCase() + catKey.slice(1);
+}
+
+function renderCategoryFilterTabs() {
+    const nav = document.getElementById('menuFilterTabs');
+    if (!nav) return;
+    
+    nav.innerHTML = '';
+    
+    // Tab "Todos os Produtos"
+    const btnAll = document.createElement('button');
+    btnAll.className = `filter-tab ${activeMenuCategory === 'todos' ? 'active' : ''}`;
+    btnAll.innerText = 'Todos os Produtos';
+    btnAll.onclick = () => setMenuCategoryFilter('todos');
+    nav.appendChild(btnAll);
+    
+    // Dynamic Categories from menuData.menu_items
+    const menuItems = menuData.menu_items || {};
+    Object.keys(menuItems).forEach(catKey => {
+        const count = Array.isArray(menuItems[catKey]) ? menuItems[catKey].length : 0;
+        const btnCat = document.createElement('button');
+        btnCat.className = `filter-tab ${activeMenuCategory === catKey ? 'active' : ''}`;
+        btnCat.innerText = `${getCategoryDisplayName(catKey)} (${count})`;
+        btnCat.onclick = () => setMenuCategoryFilter(catKey);
+        nav.appendChild(btnCat);
+    });
+    
+    // Tab "Adicionais"
+    const btnAds = document.createElement('button');
+    btnAds.className = `filter-tab ${activeMenuCategory === 'tab_adicionais' ? 'active' : ''}`;
+    btnAds.innerText = 'Adicionais / Opcionais';
+    btnAds.onclick = () => setMenuCategoryFilter('tab_adicionais');
+    nav.appendChild(btnAds);
+    
+    // Tab "Pop-up PromoÃ§Ãµes"
+    const btnPromo = document.createElement('button');
+    btnPromo.className = `filter-tab ${activeMenuCategory === 'tab_promo' ? 'active' : ''}`;
+    btnPromo.innerText = 'Pop-up PromoÃ§Ãµes';
+    btnPromo.onclick = () => setMenuCategoryFilter('tab_promo');
+    nav.appendChild(btnPromo);
+}
+
+function setMenuCategoryFilter(categoryKey) {
+    activeMenuCategory = categoryKey;
+    
+    const prodSection = document.getElementById('menuTabProducts');
+    const adsSection = document.getElementById('menuTabAdicionais');
+    const promoSection = document.getElementById('menuTabPromo');
+    
+    if (categoryKey === 'tab_adicionais') {
+        if (prodSection) prodSection.classList.add('display-none');
+        if (adsSection) adsSection.classList.remove('display-none');
+        if (promoSection) promoSection.classList.add('display-none');
+        renderAdicionaisList();
+    } else if (categoryKey === 'tab_promo') {
+        if (prodSection) prodSection.classList.add('display-none');
+        if (adsSection) adsSection.classList.add('display-none');
+        if (promoSection) promoSection.classList.remove('display-none');
+        loadPromoConfigIntoUI();
+    } else {
+        if (prodSection) prodSection.classList.remove('display-none');
+        if (adsSection) adsSection.classList.add('display-none');
+        if (promoSection) promoSection.classList.add('display-none');
+        renderProductsList();
+    }
+    
+    renderCategoryFilterTabs();
+}
+
+function renderProductsList() {
+    const grid = document.getElementById('productsListGrid');
     if (!grid) return;
     
     grid.innerHTML = '';
+    if (!menuData || !menuData.menu_items) return;
     
-    const searchVal = document.getElementById('searchFlavor').value.toLowerCase().trim();
-    const filterCat = document.getElementById('filterCategory').value;
+    const searchVal = (document.getElementById('searchMenuProduct')?.value || '').toLowerCase().trim();
     
-    const pizzas = menuData.menu_items?.pizzas || [];
+    let allItems = [];
+    const menuItems = menuData.menu_items || {};
     
-    pizzas.forEach((pizza) => {
-        if (searchVal && !pizza.name.toLowerCase().includes(searchVal) && !pizza.description.toLowerCase().includes(searchVal)) {
-            return;
-        }
+    Object.keys(menuItems).forEach(catKey => {
+        if (activeMenuCategory !== 'todos' && activeMenuCategory !== catKey) return;
         
-        if (filterCat !== 'todos' && pizza.category !== filterCat) {
-            return;
-        }
-        
+        const items = menuItems[catKey] || [];
+        items.forEach(it => {
+            allItems.push({ ...it, categoryKey: catKey });
+        });
+    });
+    
+    if (searchVal) {
+        allItems = allItems.filter(it => 
+            (it.name && it.name.toLowerCase().includes(searchVal)) ||
+            (it.description && it.description.toLowerCase().includes(searchVal))
+        );
+    }
+    
+    if (allItems.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: var(--bg-card); border: 1.5px dashed var(--border-color); border-radius: var(--radius-lg); color: var(--text-muted);">
+                <span class="material-symbols-rounded" style="font-size: 40px; color: var(--accent-gold); margin-bottom: 8px;">search_off</span>
+                <h4 style="color: var(--text-main); font-size: 16px; margin-bottom: 4px;">Nenhum produto encontrado</h4>
+                <p style="font-size: 13px;">Tente buscar com outro termo ou adicione um novo produto nesta categoria.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    allItems.forEach(item => {
         const card = document.createElement('div');
         card.className = 'flavor-card';
-        if (pizza.available === false) {
-            card.style.opacity = '0.6';
+        if (item.available === false) {
+            card.style.opacity = '0.65';
         }
         
-        const badgeHTML = pizza.badge ? `<span class="flavor-badge-label">${pizza.badge}</span>` : '';
-        const isChecked = pizza.available !== false ? 'checked' : '';
+        const isChecked = item.available !== false ? 'checked' : '';
+        const badgeHTML = item.badge ? `<span class="flavor-badge-label">${item.badge}</span>` : '';
+        const imgPath = resolveProductImage(item, item.categoryKey);
         
         card.innerHTML = `
             <div class="flavor-card-header">
-                <div class="flavor-card-info">
-                    <h4 style="margin: 0; color: var(--text-main); font-size: 15px;">${pizza.name}</h4>
-                    <span class="category-tag ${pizza.category === 'salgadas' ? 'salgada' : 'doce'}">
-                        ${pizza.category === 'salgadas' ? 'Salgada' : 'Doce'}
-                    </span>
+                <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
+                    <img src="${imgPath}" alt="${item.name}" style="width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover; border: 1px solid var(--border-color); background: #fff;" onerror="this.src='assets/hotdog.jpg'">
+                    <div class="flavor-card-info" style="flex: 1;">
+                        <h4 style="margin: 0; color: var(--text-main); font-size: 15px; font-weight: 700;">${item.name}</h4>
+                        <span class="category-tag salgada">
+                            ${getCategoryDisplayName(item.categoryKey)}
+                        </span>
+                    </div>
                 </div>
                 
-                <label class="switch" title="${pizza.available !== false ? 'Disponível no Site' : 'Pausado/Indisponível'}">
-                    <input type="checkbox" ${isChecked} onchange="toggleFlavorAvailability('${pizza.id}', this.checked)">
+                <label class="switch" title="${item.available !== false ? 'DisponÃ­vel no Site' : 'Pausado/IndisponÃ­vel'}">
+                    <input type="checkbox" ${isChecked} onchange="toggleProductAvailability('${item.id}', '${item.categoryKey}', this.checked)">
                     <span class="slider"></span>
                 </label>
             </div>
             
-            <p class="flavor-card-desc" style="margin: 0; flex: 1;">${pizza.description}</p>
+            <p class="flavor-card-desc" style="margin: 8px 0; flex: 1; font-size: 12.5px; color: var(--text-body); line-height: 1.4;">${item.description || 'Sem descriÃ§Ã£o cadastrada.'}</p>
             
-            <div class="flavor-card-meta">
-                <span class="flavor-price-tier" style="font-weight: 600; color: var(--primary); font-size: 12px; text-transform: uppercase;">
-                    ${pizza.categoryType || 'promocional'}
+            <div class="flavor-card-meta" style="display: flex; justify-content: space-between; align-items: center; padding-top: 6px;">
+                <span class="flavor-price-tier" style="font-weight: 800; color: var(--primary); font-size: 16px;">
+                    R$ ${Number(item.price || 0).toFixed(2).replace('.', ',')}
                 </span>
                 ${badgeHTML}
             </div>
             
-            <div class="flavor-card-actions">
-                <button class="btn-icon-action" onclick="openEditFlavorModal('${pizza.id}')" title="Editar Sabor">
+            <div class="flavor-card-actions" style="margin-top: 10px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 8px;">
+                <button class="btn-icon-action" onclick="openEditProductModal('${item.id}', '${item.categoryKey}')" title="Editar Produto">
                     <span class="material-symbols-rounded" style="font-size: 18px;">edit</span>
                 </button>
-                <button class="btn-icon-action delete" onclick="deleteFlavor('${pizza.id}')" title="Excluir Sabor">
+                <button class="btn-icon-action delete" onclick="deleteProduct('${item.id}', '${item.categoryKey}')" title="Excluir Produto">
                     <span class="material-symbols-rounded" style="font-size: 18px;">delete</span>
                 </button>
             </div>
@@ -3326,311 +3387,509 @@ function renderFlavorsList() {
     });
 }
 
-function filterFlavorsList() {
-    renderFlavorsList();
+function filterProductsList() {
+    renderProductsList();
 }
 
-function renderPricesMatrix() {
-    const tbody = document.getElementById('pricesMatrixBody');
-    if (!tbody) return;
+function openAddProductModal(defaultCat = null) {
+    document.getElementById('productModalTitle').innerText = 'Adicionar Novo Produto';
+    document.getElementById('productEditId').value = '';
+    document.getElementById('productEditOldCategory').value = '';
+    document.getElementById('productForm').reset();
     
-    tbody.innerHTML = '';
+    populateCategoryDropdown(defaultCat || (activeMenuCategory !== 'todos' && !activeMenuCategory.startsWith('tab_') ? activeMenuCategory : 'lanches'));
     
-    const sizes = ['broto', 'media', 'grande', 'vulcao', 'trem'];
-    const sizeLabels = {
-        'broto': 'Broto (4 fatias)',
-        'media': 'Média (8 fatias)',
-        'grande': 'Grande (12 fatias)',
-        'vulcao': 'Vulcão (12 fatias)',
-        'trem': 'Trem (24 fatias)'
-    };
+    const cat = document.getElementById('productCategorySelect').value || 'lanches';
+    const defImg = getDefaultProductImageForCategory(cat);
+    document.getElementById('productImage').value = defImg;
+    updateProductImagePreview(defImg);
+    populateProductImageSuggestions(cat);
     
-    const prices = menuData.pizza_prices || {};
-    
-    sizes.forEach(size => {
-        const sizePrices = prices[size] || { promocional: 0, tradicional: 0, especial: 0, premium: 0 };
-        const tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid var(--border-color)';
-        
-        tr.innerHTML = `
-            <td style="padding: 12px 10px; font-weight: 600; color: var(--text-main);">${sizeLabels[size]}</td>
-            <td style="padding: 8px 10px;">
-                <input type="number" step="0.50" class="price-input" data-size="${size}" data-category="promocional" value="${sizePrices.promocional || 0}" style="padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); width: 85px;">
-            </td>
-            <td style="padding: 8px 10px;">
-                <input type="number" step="0.50" class="price-input" data-size="${size}" data-category="tradicional" value="${sizePrices.tradicional || 0}" style="padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); width: 85px;">
-            </td>
-            <td style="padding: 8px 10px;">
-                <input type="number" step="0.50" class="price-input" data-size="${size}" data-category="especial" value="${sizePrices.especial || 0}" style="padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); width: 85px;">
-            </td>
-            <td style="padding: 8px 10px;">
-                <input type="number" step="0.50" class="price-input" data-size="${size}" data-category="premium" value="${sizePrices.premium || sizePrices.camarao || 0}" style="padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); width: 85px;">
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+    openModal('productModal');
 }
 
-function renderBordersTable() {
-    const tbody = document.getElementById('bordersTableBody');
-    if (!tbody) return;
+function openEditProductModal(id, categoryKey) {
+    if (!menuData || !menuData.menu_items) return;
+    const list = menuData.menu_items[categoryKey] || [];
+    const item = list.find(i => i.id === id);
+    if (!item) return;
     
-    tbody.innerHTML = '';
+    document.getElementById('productModalTitle').innerText = 'Editar Produto';
+    document.getElementById('productEditId').value = item.id;
+    document.getElementById('productEditOldCategory').value = categoryKey;
     
-    const borders = menuData.borders || {};
+    document.getElementById('productName').value = item.name || '';
+    document.getElementById('productDescription').value = item.description || '';
+    document.getElementById('productPrice').value = Number(item.price || 0).toFixed(2);
+    document.getElementById('productBadge').value = item.badge || '';
     
-    Object.keys(borders).forEach(key => {
-        const border = borders[key];
-        const tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid var(--border-color)';
-        
-        const isSemBorda = key === 'sem-borda';
-        const nameInputHTML = isSemBorda 
-            ? `<span style="font-weight: 500; padding: 8px 0; display: inline-block; color: var(--text-muted);">${border.name}</span>`
-            : `<input type="text" class="border-name-input" data-id="${key}" value="${border.name}" style="width: 100%; max-width: 250px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main);">`;
-            
-        const priceInputHTML = isSemBorda
-            ? `<span style="color: var(--text-muted);">R$ 0,00 (Grátis)</span>`
-            : `<input type="number" step="0.50" class="border-price-input" data-id="${key}" value="${border.price}" style="width: 85px; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main);">`;
-            
-        tr.innerHTML = `
-            <td style="padding: 12px 10px; font-family: monospace; font-size: 13px; color: var(--text-light);">${key}</td>
-            <td style="padding: 8px 10px;">${nameInputHTML}</td>
-            <td style="padding: 8px 10px;">${priceInputHTML}</td>
-        `;
-        tbody.appendChild(tr);
-    });
+    populateCategoryDropdown(categoryKey);
+    
+    const imgVal = item.image || getDefaultProductImageForCategory(categoryKey);
+    document.getElementById('productImage').value = imgVal;
+    updateProductImagePreview(imgVal);
+    populateProductImageSuggestions(categoryKey);
+    
+    openModal('productModal');
 }
 
-function saveMenuPrices() {
-    if (!menuData) return;
-    
-    const priceInputs = document.querySelectorAll('.price-input');
-    const updatedPrices = JSON.parse(JSON.stringify(menuData.pizza_prices || {}));
-    
-    priceInputs.forEach(input => {
-        const size = input.getAttribute('data-size');
-        const category = input.getAttribute('data-category');
-        const val = parseFloat(input.value) || 0;
-        
-        if (!updatedPrices[size]) updatedPrices[size] = {};
-        updatedPrices[size][category] = val;
-    });
-    
-    const updatedBorders = JSON.parse(JSON.stringify(menuData.borders || {}));
-    const borderNameInputs = document.querySelectorAll('.border-name-input');
-    const borderPriceInputs = document.querySelectorAll('.border-price-input');
-    
-    borderNameInputs.forEach(input => {
-        const key = input.getAttribute('data-id');
-        if (updatedBorders[key]) {
-            updatedBorders[key].name = input.value.trim() || updatedBorders[key].name;
-        }
-    });
-    
-    borderPriceInputs.forEach(input => {
-        const key = input.getAttribute('data-id');
-        if (updatedBorders[key]) {
-            updatedBorders[key].price = parseFloat(input.value) || 0;
-        }
-    });
-    
-    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-        firebase.database().ref('menu/pizza_prices').set(updatedPrices)
-        .then(() => {
-            return firebase.database().ref('menu/borders').set(updatedBorders);
-        })
-        .then(() => {
-            triggerCentralAutoBackup();
-            alert("Preços e bordas atualizados com sucesso no Firebase!");
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Erro ao salvar preços no Firebase.");
-        });
-    } else {
-        menuData.pizza_prices = updatedPrices;
-        menuData.borders = updatedBorders;
-        triggerCentralAutoBackup();
-        alert("Preços locais salvos (sem Firebase).");
-    }
+function closeProductModal() {
+    closeModal('productModal');
 }
 
-function toggleFlavorAvailability(id, isChecked) {
-    if (!menuData) return;
+function toggleProductAvailability(id, categoryKey, isChecked) {
+    if (!menuData || !menuData.menu_items) return;
+    const list = menuData.menu_items[categoryKey];
+    if (!list) return;
     
-    const pizzas = menuData.menu_items?.pizzas || [];
-    const index = pizzas.findIndex(p => p.id === id);
+    const index = list.findIndex(i => i.id === id);
     if (index === -1) return;
     
-    pizzas[index].available = isChecked;
+    list[index].available = isChecked;
     
     if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-        firebase.database().ref(`menu/menu_items/pizzas/${index}/available`).set(isChecked)
+        firebase.database().ref(`menu/menu_items/${categoryKey}/${index}/available`).set(isChecked)
         .then(() => {
             triggerCentralAutoBackup();
-            console.log(`Disponibilidade de ${pizzas[index].name} alterada para: ${isChecked}`);
-        })
-        .catch(err => console.error("Erro ao alterar disponibilidade no Firebase:", err));
-    } else {
-        triggerCentralAutoBackup();
-        renderFlavorsList();
-    }
-}
-
-function openAddFlavorModal() {
-    document.getElementById('flavorModalTitle').innerText = 'Adicionar Novo Sabor';
-    document.getElementById('flavorEditId').value = '';
-    document.getElementById('flavorForm').reset();
-    
-    // Set default value and trigger suggestions
-    document.getElementById('flavorImage').value = 'assets/pizza_hero.png';
-    updateFlavorImagePreview('assets/pizza_hero.png');
-    onFlavorCategoryChange('salgadas');
-    
-    openModal('flavorModal');
-}
-
-function openEditFlavorModal(id) {
-    if (!menuData) return;
-    
-    const pizzas = menuData.menu_items?.pizzas || [];
-    const pizza = pizzas.find(p => p.id === id);
-    if (!pizza) return;
-    
-    document.getElementById('flavorModalTitle').innerText = 'Editar Sabor';
-    document.getElementById('flavorEditId').value = pizza.id;
-    document.getElementById('flavorName').value = pizza.name;
-    document.getElementById('flavorDescription').value = pizza.description;
-    document.getElementById('flavorCategory').value = pizza.category;
-    document.getElementById('flavorCategoryType').value = pizza.categoryType || 'promocional';
-    document.getElementById('flavorBadge').value = pizza.badge || '';
-    document.getElementById('flavorImage').value = pizza.image || 'assets/pizza_hero.png';
-    updateFlavorImagePreview(pizza.image || 'assets/pizza_hero.png');
-    
-    // Trigger suggestions
-    onFlavorCategoryChange(pizza.category);
-    
-    openModal('flavorModal');
-}
-
-function closeFlavorModal() {
-    closeModal('flavorModal');
-}
-
-function openModal(modalId) {
-    const overlay = document.getElementById(modalId);
-    overlay.classList.remove('display-none');
-    setTimeout(() => {
-        overlay.classList.add('active');
-        overlay.style.pointerEvents = 'auto';
-        overlay.style.opacity = '1';
-    }, 10);
-}
-
-function closeModal(modalId) {
-    const overlay = document.getElementById(modalId);
-    overlay.classList.remove('active');
-    overlay.style.pointerEvents = 'none';
-    overlay.style.opacity = '0';
-    setTimeout(() => {
-        overlay.classList.add('display-none');
-    }, 300);
-}
-
-function deleteFlavor(id) {
-    if (!menuData) return;
-    
-    const pizzas = menuData.menu_items?.pizzas || [];
-    const pizza = pizzas.find(p => p.id === id);
-    if (!pizza) return;
-    
-    if (!confirm(`Tem certeza que deseja excluir o sabor "${pizza.name}" permanentemente?`)) return;
-    
-    const updatedPizzas = pizzas.filter(p => p.id !== id);
-    
-    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-        firebase.database().ref('menu/menu_items/pizzas').set(updatedPizzas)
-        .then(() => {
-            triggerCentralAutoBackup();
-            alert(`Sabor "${pizza.name}" excluído com sucesso!`);
+            showToast(`Disponibilidade de "${list[index].name}" atualizada!`, 'success');
         })
         .catch(err => {
-            console.error(err);
-            alert("Erro ao excluir sabor no Firebase.");
+            console.error("Erro ao atualizar disponibilidade:", err);
+            showToast("Erro ao atualizar no Firebase.", "error");
         });
     } else {
-        menuData.menu_items.pizzas = updatedPizzas;
-        triggerCentralAutoBackup();
-        renderFlavorsList();
+        saveLocalMenu(() => {
+            renderProductsList();
+            showToast(`Disponibilidade atualizada localmente!`, 'success');
+        });
     }
 }
 
-function saveFlavor(event) {
+function saveProduct(event) {
     event.preventDefault();
     if (!menuData) return;
+    if (!menuData.menu_items) menuData.menu_items = {};
     
-    const idField = document.getElementById('flavorEditId').value;
-    const name = document.getElementById('flavorName').value.trim();
-    const description = document.getElementById('flavorDescription').value.trim();
-    const category = document.getElementById('flavorCategory').value;
-    const categoryType = document.getElementById('flavorCategoryType').value;
-    const badge = document.getElementById('flavorBadge').value.trim();
-    const image = document.getElementById('flavorImage').value;
+    const editId = document.getElementById('productEditId').value;
+    const oldCategory = document.getElementById('productEditOldCategory').value;
     
-    const pizzas = menuData.menu_items?.pizzas || [];
+    const name = document.getElementById('productName').value.trim();
+    const description = document.getElementById('productDescription').value.trim();
+    const categoryKey = document.getElementById('productCategorySelect').value.toLowerCase().trim();
+    const price = parseFloat(document.getElementById('productPrice').value) || 0;
+    const badge = document.getElementById('productBadge').value.trim();
+    const image = document.getElementById('productImage').value.trim() || getDefaultProductImageForCategory(categoryKey);
     
-    if (idField) {
-        const index = pizzas.findIndex(p => p.id === idField);
-        if (index !== -1) {
-            pizzas[index].name = name;
-            pizzas[index].description = description;
-            pizzas[index].category = category;
-            pizzas[index].categoryType = categoryType;
-            pizzas[index].badge = badge;
-            pizzas[index].image = image;
+    if (!menuData.menu_items[categoryKey]) {
+        menuData.menu_items[categoryKey] = [];
+    }
+    
+    if (editId) {
+        if (oldCategory && oldCategory !== categoryKey && menuData.menu_items[oldCategory]) {
+            const oldList = menuData.menu_items[oldCategory];
+            const oldIdx = oldList.findIndex(i => i.id === editId);
+            let prevItem = {};
+            if (oldIdx !== -1) {
+                prevItem = oldList[oldIdx];
+                oldList.splice(oldIdx, 1);
+            }
+            
+            const updatedItem = {
+                ...prevItem,
+                id: editId,
+                name,
+                description,
+                category: categoryKey,
+                price,
+                image,
+                available: prevItem.available !== false
+            };
+            if (badge) {
+                updatedItem.badge = badge;
+            } else {
+                delete updatedItem.badge;
+            }
+            
+            menuData.menu_items[categoryKey].push(updatedItem);
+        } else {
+            const list = menuData.menu_items[categoryKey];
+            const idx = list.findIndex(i => i.id === editId);
+            if (idx !== -1) {
+                list[idx].name = name;
+                list[idx].description = description;
+                list[idx].category = categoryKey;
+                list[idx].price = price;
+                list[idx].image = image;
+                if (badge) {
+                    list[idx].badge = badge;
+                } else {
+                    delete list[idx].badge;
+                }
+            }
         }
     } else {
         const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+        const list = menuData.menu_items[categoryKey];
         
-        if (pizzas.some(p => p.id === id)) {
-            alert("Já existe um sabor cadastrado com um nome muito parecido. Por favor, use um nome diferente.");
+        if (list.some(i => i.id === id)) {
+            alert("JÃ¡ existe um produto cadastrado com um nome muito parecido nesta categoria.");
             return;
         }
         
-        pizzas.push({
-            id: id,
-            name: name,
-            description: description,
-            category: category,
-            categoryType: categoryType,
-            badge: badge,
-            image: image,
+        const newItem = {
+            id,
+            name,
+            description,
+            category: categoryKey,
+            price,
+            image,
             available: true
-        });
+        };
+        if (badge) newItem.badge = badge;
+        
+        list.push(newItem);
     }
     
     if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-        firebase.database().ref('menu/menu_items/pizzas').set(pizzas)
+        firebase.database().ref('menu/menu_items').set(menuData.menu_items)
         .then(() => {
-            closeFlavorModal();
+            closeProductModal();
             triggerCentralAutoBackup();
-            alert("Sabor gravado com sucesso!");
+            showToast("Produto salvo com sucesso no Firebase!", "success");
+            renderMenuManager();
         })
         .catch(err => {
             console.error(err);
-            alert("Erro ao gravar sabor no Firebase.");
+            alert("Erro ao gravar produto no Firebase.");
         });
     } else {
-        closeFlavorModal();
-        triggerCentralAutoBackup();
-        renderFlavorsList();
+        saveLocalMenu(() => {
+            closeProductModal();
+            triggerCentralAutoBackup();
+            showToast("Produto salvo localmente com sucesso!", "success");
+            renderMenuManager();
+        });
     }
 }
 
-/* ==========================================================================
-   Shop Status Management
-   ========================================================================== */
+function deleteProduct(id, categoryKey) {
+    if (!menuData || !menuData.menu_items) return;
+    const list = menuData.menu_items[categoryKey];
+    if (!list) return;
+    
+    const item = list.find(i => i.id === id);
+    if (!item) return;
+    
+    if (!confirm(`Tem certeza que deseja excluir o produto "${item.name}" permanentemente?`)) return;
+    
+    menuData.menu_items[categoryKey] = list.filter(i => i.id !== id);
+    
+    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+        firebase.database().ref(`menu/menu_items/${categoryKey}`).set(menuData.menu_items[categoryKey])
+        .then(() => {
+            triggerCentralAutoBackup();
+            showToast(`Produto "${item.name}" excluÃ­do com sucesso!`, "success");
+            renderMenuManager();
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Erro ao excluir produto no Firebase.");
+        });
+    } else {
+        saveLocalMenu(() => {
+            triggerCentralAutoBackup();
+            showToast(`Produto "${item.name}" excluÃ­do localmente!`, "success");
+            renderMenuManager();
+        });
+    }
+}
+
+function renderAdicionaisList() {
+    const tbody = document.getElementById('adicionaisTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    const ads = menuData?.adicionais || {};
+    
+    Object.keys(ads).forEach(key => {
+        const ad = ads[key];
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid var(--border-color)';
+        
+        tr.innerHTML = `
+            <td style="padding: 10px; font-family: monospace; font-size: 12px; color: var(--text-light);">${key}</td>
+            <td style="padding: 8px 10px;">
+                <input type="text" class="adicional-name-input" data-key="${key}" value="${ad.name}" style="width: 100%; max-width: 250px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 13px;">
+            </td>
+            <td style="padding: 8px 10px;">
+                <input type="number" step="0.50" class="adicional-price-input" data-key="${key}" value="${Number(ad.price || 0).toFixed(2)}" style="width: 90px; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 13px;">
+            </td>
+            <td style="padding: 8px 10px; text-align: center;">
+                <button type="button" onclick="deleteAdicional('${key}')" class="btn-img-action danger" title="Remover Adicional">
+                    <span class="material-symbols-rounded" style="font-size: 16px;">delete</span>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function saveAdicionais() {
+    if (!menuData) return;
+    if (!menuData.adicionais) menuData.adicionais = {};
+    
+    const nameInputs = document.querySelectorAll('.adicional-name-input');
+    const priceInputs = document.querySelectorAll('.adicional-price-input');
+    
+    nameInputs.forEach(input => {
+        const key = input.getAttribute('data-key');
+        if (menuData.adicionais[key]) {
+            menuData.adicionais[key].name = input.value.trim() || menuData.adicionais[key].name;
+        }
+    });
+    
+    priceInputs.forEach(input => {
+        const key = input.getAttribute('data-key');
+        if (menuData.adicionais[key]) {
+            menuData.adicionais[key].price = parseFloat(input.value) || 0;
+        }
+    });
+    
+    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+        firebase.database().ref('menu/adicionais').set(menuData.adicionais)
+        .then(() => {
+            triggerCentralAutoBackup();
+            showToast("Adicionais salvos com sucesso no Firebase!", "success");
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Erro ao salvar adicionais no Firebase.");
+        });
+    } else {
+        saveLocalMenu(() => {
+            showToast("Adicionais salvos localmente!", "success");
+        });
+    }
+}
+
+function addAdicionalRow() {
+    const idInput = document.getElementById('newAdicionalId');
+    const nameInput = document.getElementById('newAdicionalName');
+    const priceInput = document.getElementById('newAdicionalPrice');
+    
+    const name = nameInput.value.trim();
+    const key = (idInput.value.trim() || name).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    const price = parseFloat(priceInput.value) || 0;
+    
+    if (!key || !name) {
+        alert("Preencha o nome do adicional.");
+        return;
+    }
+    
+    if (!menuData.adicionais) menuData.adicionais = {};
+    menuData.adicionais[key] = { name, price };
+    
+    idInput.value = '';
+    nameInput.value = '';
+    priceInput.value = '';
+    
+    saveAdicionais();
+    renderAdicionaisList();
+}
+
+function deleteAdicional(key) {
+    if (!menuData || !menuData.adicionais) return;
+    if (!confirm(`Deseja remover o adicional "${menuData.adicionais[key]?.name || key}"?`)) return;
+    
+    delete menuData.adicionais[key];
+    
+    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+        firebase.database().ref(`menu/adicionais/${key}`).remove()
+        .then(() => {
+            triggerCentralAutoBackup();
+            showToast("Adicional removido!", "success");
+            renderAdicionaisList();
+        })
+        .catch(err => console.error(err));
+    } else {
+        saveLocalMenu(() => {
+            renderAdicionaisList();
+        });
+    }
+}
+
+function getDefaultProductImageForCategory(catKey) {
+    const defaults = {
+        'lanches': 'assets/hotdog.jpg',
+        'porcoes': 'assets/picadao.jpg',
+        'bebidas': 'assets/gourmet_bebida.png',
+        'sobremesas': 'assets/gourmet_sobremesa.png'
+    };
+    return defaults[catKey] || 'assets/hotdog.jpg';
+}
+
+function resolveProductImage(item, categoryKey = 'lanches') {
+    if (!item) return getDefaultProductImageForCategory(categoryKey);
+    if (item.image && typeof item.image === 'string' && item.image.trim() !== '') {
+        return item.image;
+    }
+    const cat = categoryKey || item.category || 'lanches';
+    return getDefaultProductImageForCategory(cat);
+}
+
+function populateCategoryDropdown(selectedCat = 'lanches') {
+    const select = document.getElementById('productCategorySelect');
+    if (!select) return;
+    
+    select.innerHTML = '';
+    const menuItems = menuData?.menu_items || { lanches: [], porcoes: [], bebidas: [], sobremesas: [] };
+    
+    const catKeys = Object.keys(menuItems);
+    if (!catKeys.includes('lanches')) catKeys.unshift('lanches');
+    if (!catKeys.includes('porcoes')) catKeys.push('porcoes');
+    if (!catKeys.includes('bebidas')) catKeys.push('bebidas');
+    if (!catKeys.includes('sobremesas')) catKeys.push('sobremesas');
+    
+    catKeys.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.innerText = getCategoryDisplayName(cat);
+        if (cat === selectedCat) opt.selected = true;
+        select.appendChild(opt);
+    });
+}
+
+function populateProductImageSuggestions(category) {
+    const container = document.getElementById('productImageSuggestions');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    let suggestions = [];
+    
+    if (category === 'lanches') {
+        suggestions = [
+            { label: 'Cachorro Big', value: 'assets/hotdog.jpg' },
+            { label: 'Cachorro Calabresa', value: 'assets/hotdog_calabresa.jpg' },
+            { label: 'Pastel Especial', value: 'assets/pastel.jpg' },
+            { label: 'Torrada / Misto', value: 'assets/torrada.jpg' },
+            { label: 'Xis Especial', value: 'assets/xis.jpg' }
+        ];
+    } else if (category === 'porcoes') {
+        suggestions = [
+            { label: 'PicadÃ£o Roloff', value: 'assets/picadao.jpg' }
+        ];
+    } else if (category === 'bebidas') {
+        suggestions = [
+            { label: 'Bebidas & Chopp', value: 'assets/gourmet_bebida.png' }
+        ];
+    } else if (category === 'sobremesas') {
+        suggestions = [
+            { label: 'Sobremesa do Dia', value: 'assets/gourmet_sobremesa.png' }
+        ];
+    }
+    
+    suggestions.forEach(s => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.style.cssText = 'padding: 4px 8px; font-size: 11px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-body); border-radius: var(--radius-sm); cursor: pointer;';
+        btn.innerText = s.label;
+        btn.onclick = () => {
+            document.getElementById('productImage').value = s.value;
+            updateProductImagePreview(s.value);
+        };
+        container.appendChild(btn);
+    });
+}
+
+function handleProductFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+        showToast('Por favor, selecione um arquivo de imagem vÃ¡lido.', 'warning');
+        return;
+    }
+    
+    showLoading('Otimizando imagem...');
+    compressAndProcessImage(file, 800, 800, 0.82, (err, compressedDataUrl) => {
+        hideLoading();
+        if (err) {
+            console.error(err);
+            showToast('NÃ£o foi possÃ­vel processar a imagem.', 'error');
+            return;
+        }
+        
+        const input = document.getElementById('productImage');
+        if (input) {
+            input.value = compressedDataUrl;
+            updateProductImagePreview(compressedDataUrl, file.name);
+            showToast('Imagem enviada e otimizada com sucesso!', 'success');
+        }
+    });
+}
+
+function updateProductImagePreview(url, fileName = '') {
+    const card = document.getElementById('productImagePreviewCard');
+    const thumb = document.getElementById('productImagePreviewThumb');
+    const nameEl = document.getElementById('productImagePreviewName');
+    
+    if (!card || !thumb) return;
+    
+    if (url && url.trim().length > 0) {
+        thumb.src = url;
+        nameEl.innerText = fileName || (url.length > 40 ? url.substring(0, 37) + '...' : url);
+        card.classList.remove('display-none');
+    } else {
+        card.classList.add('display-none');
+    }
+}
+
+function removeProductImage() {
+    const input = document.getElementById('productImage');
+    const fileInput = document.getElementById('productFileInput');
+    if (input) input.value = '';
+    if (fileInput) fileInput.value = '';
+    updateProductImagePreview('');
+    showToast('Imagem removida.', 'info');
+}
+
+function loadPromoConfigIntoUI() {
+    const promo = menuData?.promo_config || {};
+    const chk = document.getElementById('promoShowPopup');
+    const input = document.getElementById('promoFacebookUrl');
+    if (chk) chk.checked = !!promo.show_popup;
+    if (input) input.value = promo.facebook_url || '';
+}
+
+function savePromoConfig(event) {
+    if (event) event.preventDefault();
+    if (!menuData) return;
+    
+    const show = document.getElementById('promoShowPopup')?.checked || false;
+    const url = document.getElementById('promoFacebookUrl')?.value.trim() || '';
+    
+    menuData.promo_config = {
+        show_popup: show,
+        facebook_url: url
+    };
+    
+    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+        firebase.database().ref('menu/promo_config').set(menuData.promo_config)
+        .then(() => {
+            triggerCentralAutoBackup();
+            showToast('ConfiguraÃ§Ãµes de promoÃ§Ã£o salvas no Firebase!', 'success');
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Erro ao salvar configuraÃ§Ãµes de promoÃ§Ã£o.");
+        });
+    } else {
+        saveLocalMenu(() => {
+            showToast('ConfiguraÃ§Ãµes de promoÃ§Ã£o salvas localmente!', 'success');
+        });
+    }
+}
+
 function initShopStatus() {
     if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
         firebase.database().ref('status/isOpen').on('value', (snapshot) => {
@@ -3684,280 +3943,6 @@ function toggleShopStatus(isOpen) {
     }
 }
 
-/* ==========================================================================
-   Bebidas e Sobremesas Management (Simple Items CRUD)
-   ========================================================================== */
-function renderSimpleItemsList() {
-    const grid = document.getElementById('simpleItemsListGrid');
-    if (!grid) return;
-    
-    grid.innerHTML = '';
-    
-    if (!menuData) return;
-    
-    const searchVal = document.getElementById('searchSimpleItem').value.toLowerCase().trim();
-    const filterCat = document.getElementById('filterSimpleCategory').value;
-    
-    let combinedItems = [];
-    
-    if (filterCat === 'todos' || filterCat === 'bebidas') {
-        const bebidas = menuData.menu_items?.bebidas || [];
-        bebidas.forEach(item => combinedItems.push({ ...item, category: 'bebidas' }));
-    }
-    
-    if (filterCat === 'todos' || filterCat === 'sobremesas') {
-        const sobremesas = menuData.menu_items?.sobremesas || [];
-        sobremesas.forEach(item => combinedItems.push({ ...item, category: 'sobremesas' }));
-    }
-    
-    combinedItems.forEach((item) => {
-        if (searchVal && !item.name.toLowerCase().includes(searchVal) && !item.description.toLowerCase().includes(searchVal)) {
-            return;
-        }
-        
-        const card = document.createElement('div');
-        card.className = 'flavor-card';
-        if (item.available === false) {
-            card.style.opacity = '0.6';
-        }
-        
-        const isChecked = item.available !== false ? 'checked' : '';
-        const catLabel = item.category === 'bebidas' ? 'Bebida' : 'Sobremesa';
-        
-        card.innerHTML = `
-            <div class="flavor-card-header">
-                <div class="flavor-card-info">
-                    <h4 style="margin: 0; color: var(--text-main); font-size: 15px;">${item.name}</h4>
-                    <span class="category-tag ${item.category === 'bebidas' ? 'salgada' : 'doce'}">
-                        ${catLabel}
-                    </span>
-                </div>
-                
-                <label class="switch" title="${item.available !== false ? 'Disponível no Site' : 'Pausado/Indisponível'}">
-                    <input type="checkbox" ${isChecked} onchange="toggleSimpleItemAvailability('${item.id}', '${item.category}', this.checked)">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            
-            <p class="flavor-card-desc" style="margin: 0; flex: 1;">${item.description}</p>
-            
-            <div class="flavor-card-meta">
-                <span class="flavor-price-tier" style="font-weight: 600; color: var(--primary); font-size: 13px;">
-                    R$ ${item.price.toFixed(2).replace('.', ',')}
-                </span>
-            </div>
-            
-            <div class="flavor-card-actions">
-                <button class="btn-icon-action" onclick="openEditSimpleItemModal('${item.id}', '${item.category}')" title="Editar Item">
-                    <span class="material-symbols-rounded" style="font-size: 18px;">edit</span>
-                </button>
-                <button class="btn-icon-action delete" onclick="deleteSimpleItem('${item.id}', '${item.category}')" title="Excluir Item">
-                    <span class="material-symbols-rounded" style="font-size: 18px;">delete</span>
-                </button>
-            </div>
-        `;
-        
-        grid.appendChild(card);
-    });
-}
-
-function filterSimpleItemsList() {
-    renderSimpleItemsList();
-}
-
-function openAddSimpleItemModal() {
-    document.getElementById('simpleItemModalTitle').innerText = 'Adicionar Novo Item';
-    document.getElementById('simpleItemEditId').value = '';
-    document.getElementById('simpleItemEditCategory').value = '';
-    document.getElementById('simpleItemForm').reset();
-    
-    onSimpleItemCategorySelectChange('bebidas');
-    
-    openModal('simpleItemModal');
-}
-
-function onSimpleItemCategorySelectChange(val) {
-    const imgInput = document.getElementById('simpleItemImage');
-    if (!imgInput) return;
-    
-    if (val === 'bebidas') {
-        imgInput.value = 'assets/gourmet_bebida.png';
-    } else {
-        imgInput.value = 'assets/gourmet_sobremesa.png';
-    }
-    
-    populateSimpleItemSuggestions(val);
-}
-
-function openEditSimpleItemModal(id, category) {
-    if (!menuData) return;
-    
-    const list = category === 'bebidas' ? menuData.menu_items?.bebidas : menuData.menu_items?.sobremesas;
-    if (!list) return;
-    
-    const item = list.find(i => i.id === id);
-    if (!item) return;
-    
-    document.getElementById('simpleItemModalTitle').innerText = 'Editar Item';
-    document.getElementById('simpleItemEditId').value = item.id;
-    document.getElementById('simpleItemEditCategory').value = category;
-    
-    document.getElementById('simpleItemName').value = item.name;
-    document.getElementById('simpleItemDescription').value = item.description;
-    document.getElementById('simpleItemCategorySelect').value = category;
-    document.getElementById('simpleItemPrice').value = item.price;
-    document.getElementById('simpleItemImage').value = item.image || (category === 'bebidas' ? 'assets/gourmet_bebida.png' : 'assets/gourmet_sobremesa.png');
-    
-    // Trigger suggestions
-    populateSimpleItemSuggestions(category);
-    
-    openModal('simpleItemModal');
-}
-
-function closeSimpleItemModal() {
-    closeModal('simpleItemModal');
-}
-
-function toggleSimpleItemAvailability(id, category, isChecked) {
-    if (!menuData) return;
-    
-    const list = category === 'bebidas' ? menuData.menu_items?.bebidas : menuData.menu_items?.sobremesas;
-    if (!list) return;
-    
-    const index = list.findIndex(i => i.id === id);
-    if (index === -1) return;
-    
-    list[index].available = isChecked;
-    
-    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-        firebase.database().ref(`menu/menu_items/${category}/${index}/available`).set(isChecked)
-        .then(() => {
-            console.log(`Disponibilidade de ${list[index].name} alterada para: ${isChecked}`);
-        })
-        .catch(err => console.error("Erro ao alterar disponibilidade no Firebase:", err));
-    } else {
-        saveLocalMenu(() => {
-            renderSimpleItemsList();
-        });
-    }
-}
-
-function deleteSimpleItem(id, category) {
-    if (!menuData) return;
-    
-    const list = category === 'bebidas' ? menuData.menu_items?.bebidas : menuData.menu_items?.sobremesas;
-    if (!list) return;
-    
-    const item = list.find(i => i.id === id);
-    if (!item) return;
-    
-    if (!confirm(`Tem certeza que deseja excluir o item "${item.name}" permanentemente?`)) return;
-    
-    const updatedList = list.filter(i => i.id !== id);
-    
-    if (category === 'bebidas') {
-        menuData.menu_items.bebidas = updatedList;
-    } else {
-        menuData.menu_items.sobremesas = updatedList;
-    }
-    
-    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-        firebase.database().ref(`menu/menu_items/${category}`).set(updatedList)
-        .then(() => {
-            alert(`Item "${item.name}" excluído com sucesso!`);
-            renderSimpleItemsList();
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Erro ao excluir item no Firebase.");
-        });
-    } else {
-        saveLocalMenu(() => {
-            alert(`Item "${item.name}" excluído localmente com sucesso!`);
-            renderSimpleItemsList();
-        });
-    }
-}
-
-function saveSimpleItem(event) {
-    event.preventDefault();
-    if (!menuData) return;
-    
-    const idField = document.getElementById('simpleItemEditId').value;
-    const oldCategory = document.getElementById('simpleItemEditCategory').value;
-    
-    const name = document.getElementById('simpleItemName').value.trim();
-    const description = document.getElementById('simpleItemDescription').value.trim();
-    const newCategory = document.getElementById('simpleItemCategorySelect').value;
-    const price = parseFloat(document.getElementById('simpleItemPrice').value) || 0;
-    const image = document.getElementById('simpleItemImage').value;
-    
-    if (!menuData.menu_items.bebidas) menuData.menu_items.bebidas = [];
-    if (!menuData.menu_items.sobremesas) menuData.menu_items.sobremesas = [];
-    
-    if (idField) {
-        if (oldCategory !== newCategory) {
-            const oldList = oldCategory === 'bebidas' ? menuData.menu_items.bebidas : menuData.menu_items.sobremesas;
-            const itemIndex = oldList.findIndex(i => i.id === idField);
-            let itemData = { id: idField, name, description, category: newCategory, price, image, available: true };
-            if (itemIndex !== -1) {
-                itemData.available = oldList[itemIndex].available !== false;
-                oldList.splice(itemIndex, 1);
-            }
-            
-            const newList = newCategory === 'bebidas' ? menuData.menu_items.bebidas : menuData.menu_items.sobremesas;
-            newList.push(itemData);
-        } else {
-            const list = newCategory === 'bebidas' ? menuData.menu_items.bebidas : menuData.menu_items.sobremesas;
-            const index = list.findIndex(i => i.id === idField);
-            if (index !== -1) {
-                list[index].name = name;
-                list[index].description = description;
-                list[index].category = newCategory;
-                list[index].price = price;
-                list[index].image = image;
-            }
-        }
-    } else {
-        const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-        const list = newCategory === 'bebidas' ? menuData.menu_items.bebidas : menuData.menu_items.sobremesas;
-        
-        if (list.some(i => i.id === id)) {
-            alert("Já existe um item cadastrado com um nome muito parecido.");
-            return;
-        }
-        
-        list.push({
-            id: id,
-            name: name,
-            description: description,
-            category: newCategory,
-            price: price,
-            image: image,
-            available: true
-        });
-    }
-    
-    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-        firebase.database().ref('menu/menu_items').set(menuData.menu_items)
-        .then(() => {
-            closeSimpleItemModal();
-            alert("Item gravado com sucesso no Firebase!");
-            renderSimpleItemsList();
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Erro ao gravar item no Firebase.");
-        });
-    } else {
-        saveLocalMenu(() => {
-            closeSimpleItemModal();
-            alert("Item gravado localmente com sucesso!");
-            renderSimpleItemsList();
-        });
-    }
-}
-
 function saveLocalMenu(callback) {
     fetch('/api/menu', {
         method: 'POST',
@@ -3969,107 +3954,32 @@ function saveLocalMenu(callback) {
         if (callback) callback();
     })
     .catch(err => {
-        console.error("Erro ao salvar cardápio localmente:", err);
+        console.error("Erro ao salvar cardÃ¡pio localmente:", err);
         if (callback) callback();
     });
 }
 
-/* ==========================================================================
-   Image Suggestion Helpers
-   ========================================================================== */
-function onFlavorCategoryChange(val) {
-    populateFlavorImageSuggestions(val);
+function openModal(modalId) {
+    const overlay = document.getElementById(modalId);
+    if (!overlay) return;
+    overlay.classList.remove('display-none');
+    setTimeout(() => {
+        overlay.classList.add('active');
+        overlay.style.pointerEvents = 'auto';
+        overlay.style.opacity = '1';
+    }, 10);
 }
 
-function populateFlavorImageSuggestions(category) {
-    const suggestionsContainer = document.getElementById('imageSuggestions');
-    if (!suggestionsContainer) return;
-    
-    suggestionsContainer.innerHTML = '';
-    
-    let suggestions = [];
-    if (category === 'salgadas') {
-        suggestions = [
-            { label: 'Calabresa (Gourmet)', value: 'assets/gourmet_calabresa.png' },
-            { label: 'Calabresa', value: 'assets/pizza_calabresa.png' },
-            { label: 'Marguerita (Gourmet)', value: 'assets/gourmet_margherita.png' },
-            { label: 'Marguerita', value: 'assets/pizza_margherita.png' },
-            { label: '4 Queijos (Gourmet)', value: 'assets/gourmet_quatro_queijos.png' },
-            { label: '4 Queijos', value: 'assets/pizza_quatro_queijos.png' },
-            { label: 'Padrão / Hero', value: 'assets/pizza_hero.png' }
-        ];
-    } else { // doces
-        suggestions = [
-            { label: 'Morango (Gourmet)', value: 'assets/gourmet_doce_morango.png' },
-            { label: 'Chocolate', value: 'assets/pizza_chocolate.png' },
-            { label: 'Padrão / Hero', value: 'assets/pizza_hero.png' }
-        ];
-    }
-    
-    renderSuggestionsInto(suggestionsContainer, suggestions, 'flavorImage');
+function closeModal(modalId) {
+    const overlay = document.getElementById(modalId);
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    overlay.style.pointerEvents = 'none';
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.classList.add('display-none');
+    }, 300);
 }
-
-function populateSimpleItemSuggestions(category) {
-    const suggestionsContainer = document.getElementById('simpleItemImageSuggestions');
-    if (!suggestionsContainer) return;
-    
-    suggestionsContainer.innerHTML = '';
-    
-    let suggestions = [];
-    if (category === 'bebidas') {
-        suggestions = [
-            { label: 'Bebidas (Padrão)', value: 'assets/gourmet_bebida.png' }
-        ];
-    } else { // sobremesas
-        suggestions = [
-            { label: 'Sobremesas (Padrão)', value: 'assets/gourmet_sobremesa.png' }
-        ];
-    }
-    
-    renderSuggestionsInto(suggestionsContainer, suggestions, 'simpleItemImage');
-}
-
-function renderSuggestionsInto(container, suggestions, targetInputId) {
-    const label = document.createElement('span');
-    label.textContent = 'Sugestões rápidas: ';
-    label.style.fontSize = '12px';
-    label.style.color = 'var(--text-muted)';
-    label.style.marginRight = '4px';
-    container.appendChild(label);
-    
-    suggestions.forEach((sug) => {
-        const link = document.createElement('a');
-        link.href = '#';
-        link.textContent = sug.label;
-        link.style.fontSize = '12px';
-        link.style.color = '#ffc107'; // Golden/Accent color
-        link.style.textDecoration = 'none';
-        link.style.marginRight = '8px';
-        link.style.cursor = 'pointer';
-        link.style.background = 'rgba(255, 193, 7, 0.1)';
-        link.style.padding = '2px 6px';
-        link.style.borderRadius = '4px';
-        link.style.border = '1px solid rgba(255, 193, 7, 0.2)';
-        link.style.transition = 'all var(--transition)';
-        
-        link.addEventListener('mouseenter', () => {
-            link.style.background = 'rgba(255, 193, 7, 0.2)';
-        });
-        link.addEventListener('mouseleave', () => {
-            link.style.background = 'rgba(255, 193, 7, 0.1)';
-        });
-        
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const input = document.getElementById(targetInputId);
-            if (input) {
-                input.value = sug.value;
-            }
-        });
-        container.appendChild(link);
-    });
-}
-
 /* ==========================================================================
    Store Settings Functions
    ========================================================================== */
@@ -4992,7 +4902,7 @@ function exportMenuBackup() {
         const downloadAnchor = document.createElement('a');
         const today = new Date().toISOString().slice(0, 10);
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `mundo-da-pizza-cardapio-${today}.json`);
+        downloadAnchor.setAttribute("download", `roloff-lanches-cardapio-${today}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
@@ -5186,9 +5096,8 @@ function performCentralAutoBackgroundBackup() {
         const fullBackupSnapshot = {
             timestamp: new Date().toISOString(),
             menu_items: menuData.menu_items || {},
-            pizza_prices: menuData.pizza_prices || {},
-            borders: menuData.borders || {},
-            settings: CONFIG_SETTINGS || {},
+            adicionais: menuData.adicionais || {},
+                                    settings: CONFIG_SETTINGS || {},
             deliveryFees: TAXAS_ENTREGA || {},
             promo_config: menuData.promo_config || {},
             orders: ordersSnapshot,
