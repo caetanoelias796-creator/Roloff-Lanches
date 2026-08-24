@@ -30,7 +30,12 @@ const DEFAULT_MENU_FALLBACK = {
                         "category":  "lanches",
                         "price":  18.0,
                         "badge":  "Top",
-                        "available":  true
+                        "available":  true,
+                        "adicionais": {
+                            "maionese": { "name": "Maionese", "price": 0.0 },
+                            "mostarda": { "name": "Mostarda", "price": 0.0 },
+                            "ketchup": { "name": "Ketchup", "price": 0.0 }
+                        }
                     },
                     {
                         "id":  "cachorro_calabresa",
@@ -990,18 +995,34 @@ function openProductCustomizer(categoryKey, itemId) {
     const adicionaisList = document.getElementById('customizerAdicionaisList');
     if (adicionaisList) {
         adicionaisList.innerHTML = '';
-        const ads = menuData?.adicionais || DEFAULT_MENU_FALLBACK.adicionais || {};
+        
+        // Prioriza adicionais específicos configurados no item (ex: Cachorro Big), caso existam, ou fallback geral
+        let ads = item.adicionais || item.opcionais;
+        if (!ads || Object.keys(ads).length === 0) {
+            if (item.id === 'cachorro_big') {
+                ads = {
+                    "maionese": { "name": "Maionese", "price": 0.0 },
+                    "mostarda": { "name": "Mostarda", "price": 0.0 },
+                    "ketchup": { "name": "Ketchup", "price": 0.0 }
+                };
+            } else {
+                ads = menuData?.adicionais || DEFAULT_MENU_FALLBACK.adicionais || {};
+            }
+        }
         
         Object.keys(ads).forEach(adKey => {
             const ad = ads[adKey];
+            const priceVal = Number(ad.price) || 0;
+            const priceLabel = priceVal > 0 ? `<strong>+ R$ ${priceVal.toFixed(2)}</strong>` : '';
+            
             const adRow = document.createElement('label');
             adRow.className = 'adicional-checkbox-row';
             adRow.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" name="customizer_adicionais" value="${adKey}" data-name="${ad.name}" data-price="${ad.price}">
+                    <input type="checkbox" name="customizer_adicionais" value="${adKey}" data-name="${ad.name}" data-price="${priceVal}">
                     <span>${ad.name}</span>
                 </div>
-                <strong>+ R$ ${Number(ad.price).toFixed(2)}</strong>
+                ${priceLabel}
             `;
             adicionaisList.appendChild(adRow);
         });

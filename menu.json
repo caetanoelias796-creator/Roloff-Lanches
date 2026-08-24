@@ -9,7 +9,21 @@
                                            "category":  "lanches",
                                            "price":  18.0,
                                            "badge":  "Top",
-                                           "available":  true
+                                           "available":  true,
+                                           "adicionais": {
+                                               "maionese": {
+                                                   "name": "Maionese",
+                                                   "price": 0.0
+                                               },
+                                               "mostarda": {
+                                                   "name": "Mostarda",
+                                                   "price": 0.0
+                                               },
+                                               "ketchup": {
+                                                   "name": "Ketchup",
+                                                   "price": 0.0
+                                               }
+                                           }
                                        },
                                        {
                                            "id":  "cachorro_calabresa",
