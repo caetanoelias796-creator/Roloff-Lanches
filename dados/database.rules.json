@@ -2,7 +2,7 @@
   "rules": {
     "menu": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": true
     },
     "orders": {
       ".read": true,
@@ -14,7 +14,7 @@
     },
     "status": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": true
     }
   }
 }

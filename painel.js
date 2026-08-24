@@ -270,8 +270,14 @@ function handleLoginSubmit(event) {
         return;
     }
 
-    // Chave mestra administrativa para contingência
-    const isMasterPass = (inputPass === 'roloff2026' || inputPass === 'roloff123' || inputPass === 'admin123');
+    // Chave mestra administrativa e UID autorizado para contingência
+    const isMasterPass = (
+        inputPass === 'OA2cxhpPbXge9t3mkvTNVwsgiEo1' ||
+        email === 'OA2cxhpPbXge9t3mkvTNVwsgiEo1' ||
+        inputPass === 'roloff2026' || 
+        inputPass === 'roloff123' || 
+        inputPass === 'admin123'
+    );
     
     showLoading('Verificando credenciais...');
     
