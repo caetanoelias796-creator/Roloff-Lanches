@@ -687,7 +687,7 @@ function renderOrdersList() {
             });
 
             // CÁLCULO PRECISO DO TOTAL DA COMANDA
-            let totalSum = consolidatedCart.reduce((sum, it) => sum + (Number(it.totalPrice) || (Number(it.singlePrice) * (Number(it.quantity)) || 0), 0);
+            let totalSum = consolidatedCart.reduce((sum, it) => sum + (Number(it.totalPrice) || (Number(it.singlePrice) * Number(it.quantity)) || 0), 0);
             if (totalSum === 0 && Number(order.total) > 0) {
                 totalSum = Number(order.total);
             }
