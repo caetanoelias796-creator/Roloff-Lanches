@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Firebase Initialization
    ========================================================================== */
 if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebase.apps && firebase.apps.length === 0) {
@@ -5258,8 +5258,8 @@ function exportMenuBackup() {
 function exportSettingsBackup() {
     try {
         const settingsBackup = {
-            settings: CONFIG_SETTINGS,
-            deliveryFees: TAXAS_ENTREGA,
+            settings: menuData?.settings || {},
+            deliveryFees: menuData?.settings?.deliveryFees || {},
             promo_config: menuData?.promo_config || {}
         };
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settingsBackup, null, 2));
@@ -5439,8 +5439,8 @@ function performCentralAutoBackgroundBackup() {
             timestamp: new Date().toISOString(),
             menu_items: menuData.menu_items || {},
             adicionais: menuData.adicionais || {},
-                                    settings: CONFIG_SETTINGS || {},
-            deliveryFees: TAXAS_ENTREGA || {},
+            settings: menuData?.settings || {},
+            deliveryFees: menuData?.settings?.deliveryFees || {},
             promo_config: menuData.promo_config || {},
             orders: ordersSnapshot,
             orders_summary: {

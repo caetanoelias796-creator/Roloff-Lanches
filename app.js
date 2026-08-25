@@ -831,15 +831,43 @@ function populateNeighborhoodSelect(deliveryFees) {
     select.innerHTML = '<option value="" disabled selected>Selecione seu bairro</option>';
     
     if (deliveryFees && typeof deliveryFees === 'object' && Object.keys(deliveryFees).length > 0) {
-        Object.keys(deliveryFees).forEach(bairro => {
-            const fee = Number(deliveryFees[bairro]);
-            const feeStr = fee === 0 ? 'Grátis' : `R$ ${fee.toFixed(2)}`;
-            const opt = document.createElement('option');
-            opt.value = bairro;
-            opt.innerText = `${bairro} (${feeStr})`;
-            opt.dataset.fee = fee;
-            select.appendChild(opt);
+        const sortedKeys = Object.keys(deliveryFees).sort((a, b) => {
+            const itemA = deliveryFees[a];
+            const itemB = deliveryFees[b];
+            const nameA = typeof itemA === 'object' && itemA ? (itemA.name || a) : a;
+            const nameB = typeof itemB === 'object' && itemB ? (itemB.name || b) : b;
+            return nameA.localeCompare(nameB, 'pt-BR', { sensitivity: 'base' });
         });
+
+        let hasActive = false;
+        sortedKeys.forEach(key => {
+            const item = deliveryFees[key];
+            if (!item) return;
+
+            const isActive = typeof item === 'object' ? (item.active !== false) : true;
+            if (!isActive) return;
+
+            const name = (typeof item === 'object' && item.name) ? item.name : key;
+            const rawFee = typeof item === 'object' ? (item.fee !== undefined ? item.fee : (item.valor !== undefined ? item.valor : 0)) : item;
+            const fee = isNaN(Number(rawFee)) ? 0 : Number(rawFee);
+            const feeStr = fee === 0 ? 'Grátis' : `R$ ${fee.toFixed(2).replace('.', ',')}`;
+
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.innerText = `${name} (${feeStr})`;
+            opt.dataset.fee = fee;
+            opt.dataset.id = key;
+            select.appendChild(opt);
+            hasActive = true;
+        });
+
+        if (!hasActive) {
+            const opt = document.createElement('option');
+            opt.value = "Centro";
+            opt.innerText = "Centro (Taxa a combinar)";
+            opt.dataset.fee = "0";
+            select.appendChild(opt);
+        }
     } else {
         const opt = document.createElement('option');
         opt.value = "Centro";
