@@ -3061,11 +3061,13 @@ function switchSection(section) {
     const btnNavOrders = document.getElementById('btnNavOrders');
     const btnNavTables = document.getElementById('btnNavTables');
     const btnNavMenu = document.getElementById('btnNavMenu');
+    const btnNavDeliveryFees = document.getElementById('btnNavDeliveryFees');
     const btnNavReports = document.getElementById('btnNavReports');
     const btnNavSettings = document.getElementById('btnNavSettings');
     const sectionOrders = document.getElementById('section-orders');
     const sectionTables = document.getElementById('section-tables');
     const sectionMenu = document.getElementById('section-menu');
+    const sectionDeliveryFees = document.getElementById('section-delivery-fees');
     const sectionReports = document.getElementById('section-reports');
     const sectionSettings = document.getElementById('section-settings');
     
@@ -3073,6 +3075,7 @@ function switchSection(section) {
     if (btnNavOrders) btnNavOrders.classList.remove('active');
     if (btnNavTables) btnNavTables.classList.remove('active');
     if (btnNavMenu) btnNavMenu.classList.remove('active');
+    if (btnNavDeliveryFees) btnNavDeliveryFees.classList.remove('active');
     if (btnNavReports) btnNavReports.classList.remove('active');
     if (btnNavSettings) btnNavSettings.classList.remove('active');
     
@@ -3080,6 +3083,7 @@ function switchSection(section) {
     if (sectionOrders) sectionOrders.classList.add('display-none');
     if (sectionTables) sectionTables.classList.add('display-none');
     if (sectionMenu) sectionMenu.classList.add('display-none');
+    if (sectionDeliveryFees) sectionDeliveryFees.classList.add('display-none');
     if (sectionReports) sectionReports.classList.add('display-none');
     if (sectionSettings) sectionSettings.classList.add('display-none');
     
@@ -3100,6 +3104,16 @@ function switchSection(section) {
                 initMenuSync();
             } else {
                 renderMenuManager();
+            }
+        }
+    } else if (section === 'deliveryFees') {
+        if (btnNavDeliveryFees) btnNavDeliveryFees.classList.add('active');
+        if (sectionDeliveryFees) {
+            sectionDeliveryFees.classList.remove('display-none');
+            if (!menuData) {
+                initMenuSync();
+            } else {
+                renderDeliveryFeesManager();
             }
         }
     } else if (section === 'reports') {
@@ -3199,6 +3213,9 @@ function renderMenuManager() {
     
     if (typeof renderSettingsDashboard === 'function') {
         renderSettingsDashboard();
+    }
+    if (typeof renderDeliveryFeesManager === 'function') {
+        renderDeliveryFeesManager();
     }
 }
 
@@ -4010,13 +4027,6 @@ function renderSettingsDashboard() {
     const settingsWhatsapp = document.getElementById('settingsWhatsapp');
     const settingsWhatsappFormatted = document.getElementById('settingsWhatsappFormatted');
     
-    const settingsMotoboy1Name = document.getElementById('settingsMotoboy1Name');
-    const settingsMotoboy1Whatsapp = document.getElementById('settingsMotoboy1Whatsapp');
-    const settingsMotoboy2Name = document.getElementById('settingsMotoboy2Name');
-    const settingsMotoboy2Whatsapp = document.getElementById('settingsMotoboy2Whatsapp');
-    const settingsMotoboy3Name = document.getElementById('settingsMotoboy3Name');
-    const settingsMotoboy3Whatsapp = document.getElementById('settingsMotoboy3Whatsapp');
-    
     if (settingsWhatsapp) settingsWhatsapp.value = settings.whatsapp || '';
     if (settingsWhatsappFormatted) settingsWhatsappFormatted.value = settings.whatsappFormatted || '';
     
@@ -4061,87 +4071,435 @@ function renderSettingsDashboard() {
         if (wspElem) wspElem.value = wspVal;
     }
     
-    const feesBody = document.getElementById('settingsFeesBody');
-    if (feesBody) {
-        feesBody.innerHTML = '';
-        const fees = settings.deliveryFees || {};
-        const sortedKeys = Object.keys(fees).sort((a, b) => fees[a].name.localeCompare(fees[b].name));
-        
-        if (sortedKeys.length === 0) {
-            feesBody.innerHTML = '<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted); font-size: 13px;">Nenhum bairro cadastrado.</td></tr>';
+    renderSettingsFeesTable();
+}
+
+/* ==========================================================================
+   Delivery Fees & Neighborhoods Manager (Taxas por Bairro)
+   ========================================================================== */
+let currentDeliveryFeeFilter = 'all';
+
+function setDeliveryFeeFilter(filter) {
+    currentDeliveryFeeFilter = filter;
+    
+    const btnAll = document.getElementById('filterBairroAll');
+    const btnActive = document.getElementById('filterBairroActive');
+    const btnInactive = document.getElementById('filterBairroInactive');
+    
+    if (btnAll) btnAll.classList.toggle('active', filter === 'all');
+    if (btnActive) btnActive.classList.toggle('active', filter === 'active');
+    if (btnInactive) btnInactive.classList.toggle('active', filter === 'inactive');
+    
+    renderDeliveryFeesManager();
+}
+
+function filterDeliveryFeesList() {
+    renderDeliveryFeesManager();
+}
+
+function normalizeBairroKey(name) {
+    if (!name) return `bairro_${Date.now()}`;
+    return name
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "") || `bairro_${Date.now()}`;
+}
+
+function renderDeliveryFeesManager() {
+    if (!menuData) return;
+    if (!menuData.settings) {
+        menuData.settings = {
+            whatsapp: '',
+            whatsappFormatted: '',
+            deliveryFees: {}
+        };
+    }
+    if (!menuData.settings.deliveryFees) {
+        menuData.settings.deliveryFees = {};
+    }
+
+    const fees = menuData.settings.deliveryFees;
+    const allKeys = Object.keys(fees);
+    
+    // Calculate counters & KPIs
+    let totalCount = allKeys.length;
+    let activeCount = 0;
+    let inactiveCount = 0;
+    let feeSum = 0;
+    let feeCount = 0;
+
+    allKeys.forEach(key => {
+        const item = fees[key];
+        if (!item) return;
+        const isActive = item.active !== false;
+        if (isActive) {
+            activeCount++;
+            feeSum += (Number(item.fee) || 0);
+            feeCount++;
         } else {
-            sortedKeys.forEach(key => {
-                const item = fees[key];
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid var(--border-color)';
-                tr.innerHTML = `
-                    <td style="padding: 8px 5px; color: var(--text-muted); font-size: 12px; font-family: monospace;">${key}</td>
-                    <td style="padding: 8px 5px; font-weight: 500; font-size: 14px;">${item.name}</td>
-                    <td style="padding: 8px 5px;">
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <span style="font-size: 13px; color: var(--text-muted);">R$</span>
-                            <input type="number" step="0.50" value="${item.fee}" class="bairro-fee-input" data-id="${key}" style="width: 75px; padding: 6px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 13px;">
+            inactiveCount++;
+        }
+    });
+
+    const avgFee = feeCount > 0 ? (feeSum / feeCount) : 0;
+
+    // Update KPI indicators
+    const elTotal = document.getElementById('bairrosTotalCount');
+    const elActive = document.getElementById('bairrosActiveCount');
+    const elInactive = document.getElementById('bairrosInactiveCount');
+    const elAvg = document.getElementById('bairrosAverageFee');
+
+    if (elTotal) elTotal.innerText = totalCount;
+    if (elActive) elActive.innerText = activeCount;
+    if (elInactive) elInactive.innerText = inactiveCount;
+    if (elAvg) elAvg.innerText = `R$ ${avgFee.toFixed(2).replace('.', ',')}`;
+
+    // Update filter tab counts
+    const elCountAll = document.getElementById('countFilterAll');
+    const elCountActive = document.getElementById('countFilterActive');
+    const elCountInactive = document.getElementById('countFilterInactive');
+
+    if (elCountAll) elCountAll.innerText = totalCount;
+    if (elCountActive) elCountActive.innerText = activeCount;
+    if (elCountInactive) elCountInactive.innerText = inactiveCount;
+
+    // Search query & filter
+    const searchInput = document.getElementById('searchDeliveryFee');
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+    const tbody = document.getElementById('deliveryFeesTableBody');
+    const emptyState = document.getElementById('emptyDeliveryFeesState');
+    const table = document.getElementById('deliveryFeesTable');
+
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    // Sort alphabetically by name
+    const sortedKeys = allKeys.sort((a, b) => {
+        const nameA = (fees[a]?.name || a).toLowerCase();
+        const nameB = (fees[b]?.name || b).toLowerCase();
+        return nameA.localeCompare(nameB);
+    });
+
+    const filteredKeys = sortedKeys.filter(key => {
+        const item = fees[key];
+        if (!item) return false;
+        const itemName = (item.name || key).toLowerCase();
+        const matchesQuery = !query || itemName.includes(query) || key.toLowerCase().includes(query);
+        const isActive = item.active !== false;
+
+        if (!matchesQuery) return false;
+        if (currentDeliveryFeeFilter === 'active' && !isActive) return false;
+        if (currentDeliveryFeeFilter === 'inactive' && isActive) return false;
+        return true;
+    });
+
+    if (filteredKeys.length === 0) {
+        if (emptyState) {
+            emptyState.classList.remove('display-none');
+            const h3 = emptyState.querySelector('h3');
+            const p = emptyState.querySelector('p');
+            if (query || currentDeliveryFeeFilter !== 'all') {
+                if (h3) h3.innerText = 'Nenhum bairro encontrado para esta busca';
+                if (p) p.innerText = 'Tente pesquisar com outro termo ou alterar o filtro de status.';
+            } else {
+                if (h3) h3.innerText = 'Nenhum bairro cadastrado';
+                if (p) p.innerText = 'Cadastre os bairros atendidos pelo delivery clicando no botÃ£o abaixo.';
+            }
+        }
+        if (table) table.style.display = totalCount === 0 ? 'none' : 'table';
+    } else {
+        if (emptyState) emptyState.classList.add('display-none');
+        if (table) table.style.display = 'table';
+
+        filteredKeys.forEach(key => {
+            const item = fees[key];
+            const name = item.name || key;
+            const fee = Number(item.fee) || 0;
+            const isActive = item.active !== false;
+            const formattedFee = fee === 0 ? '<span style="color: #2E7D32; font-weight: 700;">GrÃ¡tis (R$ 0,00)</span>' : `R$ ${fee.toFixed(2).replace('.', ',')}`;
+
+            const tr = document.createElement('tr');
+            tr.className = 'delivery-fee-row';
+            tr.style.borderBottom = '1px solid var(--border-color)';
+            tr.innerHTML = `
+                <td style="padding: 14px 14px; font-weight: 600; color: var(--text-main); font-size: 14px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="material-symbols-rounded" style="color: var(--primary); font-size: 20px;">pin_drop</span>
+                        <div>
+                            <span style="font-size: 14px; font-weight: 600;">${name}</span>
+                            <div style="font-size: 11px; color: var(--text-muted); font-family: monospace; font-weight: normal;">ID: ${key}</div>
                         </div>
-                    </td>
-                    <td style="padding: 8px 5px; text-align: center;">
-                        <button type="button" onclick="deleteBairroRow('${key}')" style="background: transparent; border: none; color: #ef5350; cursor: pointer; display: inline-flex; align-items: center;" title="Excluir Bairro">
+                    </div>
+                </td>
+                <td style="padding: 14px 14px; font-size: 14px; font-weight: 600;">
+                    ${formattedFee}
+                </td>
+                <td style="padding: 14px 14px; text-align: center;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <span class="delivery-fee-badge ${isActive ? 'ativo' : 'inativo'}">
+                            <span class="dot"></span>
+                            ${isActive ? 'Ativo' : 'Inativo'}
+                        </span>
+                        <label class="switch" style="transform: scale(0.85);" title="${isActive ? 'Desativar entrega neste bairro' : 'Ativar entrega neste bairro'}">
+                            <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleDeliveryFeeStatus('${key}', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </td>
+                <td style="padding: 14px 14px; text-align: center;">
+                    <div class="delivery-fee-actions">
+                        <button type="button" class="btn-table-action" onclick="openEditDeliveryFeeModal('${key}')" title="Editar Bairro">
+                            <span class="material-symbols-rounded" style="font-size: 18px;">edit</span>
+                        </button>
+                        <button type="button" class="btn-table-action danger" onclick="deleteDeliveryFee('${key}')" title="Excluir Bairro">
                             <span class="material-symbols-rounded" style="font-size: 18px;">delete</span>
                         </button>
-                    </td>
-                `;
-                feesBody.appendChild(tr);
-            });
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Also update settings table if present
+    renderSettingsFeesTable();
+}
+
+function renderSettingsFeesTable() {
+    const feesBody = document.getElementById('settingsFeesBody');
+    if (!feesBody || !menuData || !menuData.settings) return;
+    
+    feesBody.innerHTML = '';
+    const fees = menuData.settings.deliveryFees || {};
+    const sortedKeys = Object.keys(fees).sort((a, b) => ((fees[a]?.name || a).localeCompare(fees[b]?.name || b)));
+    
+    if (sortedKeys.length === 0) {
+        feesBody.innerHTML = '<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted); font-size: 13px;">Nenhum bairro cadastrado.</td></tr>';
+    } else {
+        sortedKeys.forEach(key => {
+            const item = fees[key];
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid var(--border-color)';
+            tr.innerHTML = `
+                <td style="padding: 8px 5px; color: var(--text-muted); font-size: 12px; font-family: monospace;">${key}</td>
+                <td style="padding: 8px 5px; font-weight: 500; font-size: 14px;">${item.name || key}</td>
+                <td style="padding: 8px 5px;">
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 13px; color: var(--text-muted);">R$</span>
+                        <input type="number" step="0.50" value="${item.fee !== undefined ? item.fee : 0}" class="bairro-fee-input" data-id="${key}" style="width: 75px; padding: 6px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 13px;">
+                    </div>
+                </td>
+                <td style="padding: 8px 5px; text-align: center;">
+                    <button type="button" onclick="deleteDeliveryFee('${key}')" style="background: transparent; border: none; color: #ef5350; cursor: pointer; display: inline-flex; align-items: center;" title="Excluir Bairro">
+                        <span class="material-symbols-rounded" style="font-size: 18px;">delete</span>
+                    </button>
+                </td>
+            `;
+            feesBody.appendChild(tr);
+        });
+    }
+}
+
+function openAddDeliveryFeeModal() {
+    const title = document.getElementById('deliveryFeeModalTitle');
+    const keyInput = document.getElementById('deliveryFeeEditKey');
+    const nameInput = document.getElementById('deliveryFeeName');
+    const feeInput = document.getElementById('deliveryFeeValue');
+    const activeToggle = document.getElementById('deliveryFeeActiveToggle');
+    
+    if (title) title.innerHTML = '<span class="material-symbols-rounded">add_location_alt</span><span>Adicionar Novo Bairro</span>';
+    if (keyInput) keyInput.value = '';
+    if (nameInput) {
+        nameInput.value = '';
+        nameInput.readOnly = false;
+    }
+    if (feeInput) feeInput.value = '';
+    if (activeToggle) activeToggle.checked = true;
+    updateDeliveryFeeModalStatusLabel(true);
+    
+    openModal('deliveryFeeModal');
+    setTimeout(() => {
+        if (nameInput) nameInput.focus();
+    }, 150);
+}
+
+function openEditDeliveryFeeModal(key) {
+    if (!menuData || !menuData.settings || !menuData.settings.deliveryFees) return;
+    const item = menuData.settings.deliveryFees[key];
+    if (!item) return;
+
+    const title = document.getElementById('deliveryFeeModalTitle');
+    const keyInput = document.getElementById('deliveryFeeEditKey');
+    const nameInput = document.getElementById('deliveryFeeName');
+    const feeInput = document.getElementById('deliveryFeeValue');
+    const activeToggle = document.getElementById('deliveryFeeActiveToggle');
+    
+    if (title) title.innerHTML = '<span class="material-symbols-rounded">edit_location</span><span>Editar Bairro</span>';
+    if (keyInput) keyInput.value = key;
+    if (nameInput) {
+        nameInput.value = item.name || key;
+        nameInput.readOnly = false;
+    }
+    if (feeInput) feeInput.value = item.fee !== undefined ? item.fee : 0;
+    const isActive = item.active !== false;
+    if (activeToggle) activeToggle.checked = isActive;
+    updateDeliveryFeeModalStatusLabel(isActive);
+    
+    openModal('deliveryFeeModal');
+    setTimeout(() => {
+        if (feeInput) feeInput.focus();
+    }, 150);
+}
+
+function closeDeliveryFeeModal() {
+    closeModal('deliveryFeeModal');
+}
+
+function updateDeliveryFeeModalStatusLabel(isChecked) {
+    const help = document.getElementById('deliveryFeeStatusHelpText');
+    if (help) {
+        help.textContent = isChecked ? 'Bairro ativo recebe pedidos para entrega.' : 'Bairro inativo/pausado nÃ£o aceita entregas temporariamente.';
+    }
+}
+
+function saveDeliveryFee(event) {
+    if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault();
+    }
+    if (!menuData) return;
+    if (!menuData.settings) menuData.settings = {};
+    if (!menuData.settings.deliveryFees) menuData.settings.deliveryFees = {};
+
+    const keyInput = document.getElementById('deliveryFeeEditKey');
+    const nameInput = document.getElementById('deliveryFeeName');
+    const feeInput = document.getElementById('deliveryFeeValue');
+    const activeToggle = document.getElementById('deliveryFeeActiveToggle');
+
+    const editKey = keyInput ? keyInput.value.trim() : '';
+    const name = nameInput ? nameInput.value.trim() : '';
+    const rawFee = feeInput ? parseFloat(feeInput.value) : 0;
+    const fee = isNaN(rawFee) ? 0 : Math.max(0, rawFee);
+    const active = activeToggle ? activeToggle.checked : true;
+
+    if (!name) {
+        showToast('Informe o nome do bairro.', 'warning');
+        if (nameInput) nameInput.focus();
+        return;
+    }
+
+    let key = editKey;
+    if (!key) {
+        key = normalizeBairroKey(name);
+        if (menuData.settings.deliveryFees[key]) {
+            if (!confirm(`JÃ¡ existe um bairro com o identificador "${key}". Deseja sobrescrever os dados?`)) {
+                return;
+            }
         }
+    }
+
+    const bairroRecord = {
+        id: key,
+        name: name,
+        fee: fee,
+        active: active,
+        updatedAt: Date.now()
+    };
+
+    menuData.settings.deliveryFees[key] = bairroRecord;
+
+    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+        showLoading('Salvando bairro no Firebase...');
+        firebase.database().ref(`menu/settings/deliveryFees/${key}`).set(bairroRecord)
+        .then(() => {
+            hideLoading();
+            closeDeliveryFeeModal();
+            renderDeliveryFeesManager();
+            triggerCentralAutoBackup();
+            showToast(`Bairro "${name}" salvo com sucesso!`, 'success');
+        })
+        .catch(err => {
+            hideLoading();
+            console.error("Erro ao salvar bairro no Firebase:", err);
+            showToast('Erro ao salvar no Firebase: ' + err.message, 'error');
+        });
+    } else {
+        closeDeliveryFeeModal();
+        renderDeliveryFeesManager();
+        triggerCentralAutoBackup();
+        showToast(`Bairro "${name}" salvo localmente!`, 'success');
+    }
+}
+
+function toggleDeliveryFeeStatus(key, isActive) {
+    if (!menuData || !menuData.settings || !menuData.settings.deliveryFees) return;
+    const item = menuData.settings.deliveryFees[key];
+    if (!item) return;
+
+    item.active = isActive;
+    item.updatedAt = Date.now();
+
+    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+        firebase.database().ref(`menu/settings/deliveryFees/${key}/active`).set(isActive)
+        .then(() => {
+            renderDeliveryFeesManager();
+            triggerCentralAutoBackup();
+            showToast(`Bairro "${item.name || key}" ${isActive ? 'ativado' : 'desativado'} com sucesso!`, 'success');
+        })
+        .catch(err => {
+            console.error("Erro ao atualizar status do bairro:", err);
+            item.active = !isActive; // Rollback
+            renderDeliveryFeesManager();
+            showToast('Erro ao atualizar status no Firebase.', 'error');
+        });
+    } else {
+        renderDeliveryFeesManager();
+        triggerCentralAutoBackup();
+        showToast(`Bairro "${item.name || key}" ${isActive ? 'ativado' : 'desativado'}!`, 'success');
+    }
+}
+
+function deleteDeliveryFee(key) {
+    if (!menuData || !menuData.settings || !menuData.settings.deliveryFees) return;
+    const item = menuData.settings.deliveryFees[key];
+    const name = item?.name || key;
+
+    if (!confirm(`Deseja realmente excluir o cadastro do bairro "${name}"?`)) {
+        return;
+    }
+
+    delete menuData.settings.deliveryFees[key];
+
+    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+        showLoading('Excluindo bairro...');
+        firebase.database().ref(`menu/settings/deliveryFees/${key}`).remove()
+        .then(() => {
+            hideLoading();
+            renderDeliveryFeesManager();
+            triggerCentralAutoBackup();
+            showToast(`Bairro "${name}" excluÃ­do com sucesso!`, 'success');
+        })
+        .catch(err => {
+            hideLoading();
+            console.error("Erro ao excluir bairro no Firebase:", err);
+            showToast('Erro ao excluir no Firebase: ' + err.message, 'error');
+        });
+    } else {
+        renderDeliveryFeesManager();
+        triggerCentralAutoBackup();
+        showToast(`Bairro "${name}" excluÃ­do!`, 'success');
     }
 }
 
 function addBairroRow() {
-    if (!menuData || !menuData.settings) return;
-    
-    const idInput = document.getElementById('newBairroId');
-    const nameInput = document.getElementById('newBairroName');
-    const feeInput = document.getElementById('newBairroFee');
-    
-    if (!idInput || !nameInput || !feeInput) return;
-    
-    const id = idInput.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9_-]/g, "-");
-    const name = nameInput.value.trim();
-    const fee = parseFloat(feeInput.value);
-    
-    if (!id || !name || isNaN(fee)) {
-        alert("Preencha todos os campos do novo bairro de forma válida.");
-        return;
-    }
-    
-    if (!menuData.settings.deliveryFees) {
-        menuData.settings.deliveryFees = {};
-    }
-    
-    if (menuData.settings.deliveryFees[id]) {
-        alert("Já existe um bairro cadastrado com este Identificador (ID).");
-        return;
-    }
-    
-    menuData.settings.deliveryFees[id] = { name: name, fee: fee };
-    TAXAS_ENTREGA[id] = { name: name, fee: fee };
-    
-    idInput.value = '';
-    nameInput.value = '';
-    feeInput.value = '';
-    
-    triggerCentralAutoBackup();
-    renderSettingsDashboard();
+    openAddDeliveryFeeModal();
 }
 
 function deleteBairroRow(key) {
-    if (!menuData || !menuData.settings || !menuData.settings.deliveryFees) return;
-    
-    if (confirm(`Deseja realmente remover as taxas do bairro "${menuData.settings.deliveryFees[key]?.name || key}"?`)) {
-        delete menuData.settings.deliveryFees[key];
-        delete TAXAS_ENTREGA[key];
-        triggerCentralAutoBackup();
-        renderSettingsDashboard();
-    }
+    deleteDeliveryFee(key);
 }
 
 function saveSettings(event) {

@@ -79,6 +79,10 @@
                     <span class="material-symbols-rounded">menu_book</span>
                     <span>Gerenciar Cardápio</span>
                 </a>
+                <a href="#" class="menu-item" id="btnNavDeliveryFees" onclick="switchSection('deliveryFees')">
+                    <span class="material-symbols-rounded">local_shipping</span>
+                    <span>Taxas de Entrega</span>
+                </a>
                 <a href="#" class="menu-item" id="btnNavReports" onclick="switchSection('reports')">
                     <span class="material-symbols-rounded">monitoring</span>
                     <span>Relatórios</span>
@@ -760,7 +764,163 @@
                     <!-- Filled dynamically by renderTablesDashboard() in painel.js -->
                 </div>
             </div>
+
+            <!-- SECTION 6: TAXAS DE ENTREGA POR BAIRRO -->
+            <div id="section-delivery-fees" class="display-none">
+                <!-- Header -->
+                <header class="content-header">
+                    <div class="header-title">
+                        <h1>Taxas de Entrega por Bairro</h1>
+                        <p>Cadastre os bairros atendidos pelo delivery, valores das taxas e gerencie o status de entrega</p>
+                    </div>
+                    <div class="header-actions">
+                        <button type="button" class="btn-status-next" onclick="openAddDeliveryFeeModal()" style="display: inline-flex; align-items: center; gap: 8px; border-radius: var(--radius-sm); border: none; padding: 10px 18px; cursor: pointer; font-weight: 600;">
+                            <span class="material-symbols-rounded">add_location_alt</span>
+                            Novo Bairro
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Indicators Grid (KPIs) -->
+                <section class="indicators-grid">
+                    <div class="indicator-card">
+                        <div class="card-icon bg-orange">
+                            <span class="material-symbols-rounded">location_city</span>
+                        </div>
+                        <div class="card-data">
+                            <span class="label">Total de Bairros</span>
+                            <h3 id="bairrosTotalCount">0</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="indicator-card">
+                        <div class="card-icon bg-green">
+                            <span class="material-symbols-rounded">check_circle</span>
+                        </div>
+                        <div class="card-data">
+                            <span class="label">Bairros Ativos</span>
+                            <h3 id="bairrosActiveCount">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="indicator-card">
+                        <div class="card-icon bg-blue">
+                            <span class="material-symbols-rounded">pause_circle</span>
+                        </div>
+                        <div class="card-data">
+                            <span class="label">Bairros Inativos</span>
+                            <h3 id="bairrosInactiveCount">0</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="indicator-card">
+                        <div class="card-icon bg-gold">
+                            <span class="material-symbols-rounded">payments</span>
+                        </div>
+                        <div class="card-data">
+                            <span class="label">Taxa Média</span>
+                            <h3 id="bairrosAverageFee">R$ 0,00</h3>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Filters and Search Bar -->
+                <div class="delivery-fees-toolbar" style="display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px; position: relative;">
+                        <input type="text" id="searchDeliveryFee" placeholder="Pesquisar bairro por nome..." oninput="filterDeliveryFeesList()" style="width: 100%; padding: 10px 14px 10px 38px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 14px;">
+                        <span class="material-symbols-rounded" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--text-muted); pointer-events: none;">search</span>
+                    </div>
+
+                    <nav class="filter-tabs" style="margin: 0;">
+                        <button class="filter-tab active" id="filterBairroAll" onclick="setDeliveryFeeFilter('all')">Todos (<span id="countFilterAll">0</span>)</button>
+                        <button class="filter-tab" id="filterBairroActive" onclick="setDeliveryFeeFilter('active')">Ativos (<span id="countFilterActive">0</span>)</button>
+                        <button class="filter-tab" id="filterBairroInactive" onclick="setDeliveryFeeFilter('inactive')">Inativos (<span id="countFilterInactive">0</span>)</button>
+                    </nav>
+                </div>
+
+                <!-- Neighborhoods Table Card -->
+                <div class="prices-table-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);">
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;" id="deliveryFeesTable">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--border-color); font-size: 13px; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <th style="padding: 12px 14px;">Nome do Bairro</th>
+                                    <th style="padding: 12px 14px;">Taxa de Entrega</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 140px;">Status</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 130px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deliveryFeesTableBody">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty State for Delivery Fees -->
+                    <div class="empty-state display-none" id="emptyDeliveryFeesState" style="padding: 40px 20px; text-align: center;">
+                        <span class="material-symbols-rounded" style="font-size: 48px; color: var(--text-muted); margin-bottom: 12px;">location_off</span>
+                        <h3 style="margin-bottom: 6px; color: var(--text-main); font-size: 16px;">Nenhum bairro cadastrado</h3>
+                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">Cadastre os bairros atendidos pelo delivery clicando no botão abaixo.</p>
+                        <button type="button" class="btn-status-next" onclick="openAddDeliveryFeeModal()" style="display: inline-flex; align-items: center; gap: 8px; border-radius: var(--radius-sm); border: none; padding: 8px 16px; cursor: pointer; font-weight: 600; font-size: 13px; margin: 0 auto;">
+                            <span class="material-symbols-rounded" style="font-size: 18px;">add_location_alt</span>
+                            Cadastrar Primeiro Bairro
+                        </button>
+                    </div>
+                </div>
+            </div>
         </main>
+    </div>
+
+    <!-- Delivery Fee Add/Edit Modal Overlay -->
+    <div class="modal-overlay display-none" id="deliveryFeeModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: var(--transition);">
+        <div class="modal-container" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); width: 92%; max-width: 480px; padding: 25px; box-shadow: var(--shadow-lg);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                <h3 id="deliveryFeeModalTitle" style="color: var(--primary); font-family: var(--font-display); font-size: 18px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-rounded">local_shipping</span>
+                    <span>Adicionar Novo Bairro</span>
+                </h3>
+                <button type="button" class="btn-close-modal" onclick="closeDeliveryFeeModal()" style="border: none; background: transparent; color: var(--text-light); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%;">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            
+            <form id="deliveryFeeForm" onsubmit="saveDeliveryFee(event)" style="display: flex; flex-direction: column; gap: 16px;">
+                <input type="hidden" id="deliveryFeeEditKey">
+                
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="deliveryFeeName" style="font-size: 13px; font-weight: 600; color: var(--text-main);">Nome do Bairro <span style="color: #ef5350;">*</span></label>
+                    <input type="text" id="deliveryFeeName" required placeholder="Ex: Centro, Bela Vista, São Cristóvão..." style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 14px;">
+                </div>
+                
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="deliveryFeeValue" style="font-size: 13px; font-weight: 600; color: var(--text-main);">Valor da Taxa de Entrega (R$) <span style="color: #ef5350;">*</span></label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <span style="position: absolute; left: 12px; font-weight: 600; color: var(--text-muted); font-size: 14px;">R$</span>
+                        <input type="number" step="0.50" min="0" id="deliveryFeeValue" required placeholder="0.00" style="padding: 10px 12px 10px 38px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 14px; width: 100%;">
+                    </div>
+                    <small style="color: var(--text-muted); font-size: 11px;">Digite 0 para frete grátis neste bairro.</small>
+                </div>
+
+                <div class="form-group" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-main);">Status da Entrega</div>
+                        <div id="deliveryFeeStatusHelpText" style="font-size: 11px; color: var(--text-muted);">Bairro ativo recebe pedidos para entrega.</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="deliveryFeeActiveToggle" checked onchange="updateDeliveryFeeModalStatusLabel(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="form-actions" style="margin-top: 10px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                    <button type="button" class="btn-refresh" onclick="closeDeliveryFeeModal()" style="border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px 18px; font-weight: 500; cursor: pointer; background: transparent; color: var(--text-muted);">Cancelar</button>
+                    <button type="submit" class="btn-status-next" style="display: inline-flex; align-items: center; gap: 6px; border-radius: var(--radius-sm); border: none; padding: 10px 22px; cursor: pointer; font-weight: 600;">
+                        <span class="material-symbols-rounded" style="font-size: 18px;">save</span>
+                        Salvar Bairro
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
         <!-- Product Add/Edit Modal Overlay -->
