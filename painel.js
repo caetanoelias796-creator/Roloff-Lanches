@@ -1443,9 +1443,14 @@ function renderTablesDashboard() {
     let occupiedCount = 0;
     let totalRevenueMesas = 0;
 
+    const allOrders = Array.isArray(orders) ? orders : [];
+
     for (let i = 1; i <= totalTables; i++) {
         const numFormatted = String(i).padStart(2, '0');
-              const activeOrders = orders.filter(o => {
+        const tableName = `Mesa ${numFormatted}`;
+        const tableState = (firebaseTablesState && (firebaseTablesState[numFormatted] || firebaseTablesState[String(i)] || firebaseTablesState[`mesa_${numFormatted}`])) || null;
+
+        const activeOrders = allOrders.filter(o => {
             const isTable = isTableOrderEntity(o);
             const isActive = isTableComandaOpen(o);
             if (!isTable || !isActive) return false;
