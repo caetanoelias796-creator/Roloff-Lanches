@@ -53,16 +53,18 @@
         _formatItem: function (item) {
             if (!item) return null;
 
-            var itemId = String(item.id || (item.size ? 'pizza-' + item.size : 'item'));
-            var itemName = item.name || (item.sizeName ? 'Pizza ' + item.sizeName : 'Produto');
+            var itemId = String(item.id || 'item');
+            var itemName = item.name || (item.sizeName ? 'Item ' + item.sizeName : 'Produto');
 
-            var category = 'Geral';
-            if (item.type === 'pizza' || item.size) {
-                category = 'Pizza';
-            } else if (item.category === 'bebidas') {
+            var category = 'Lanches';
+            if (item.category === 'bebidas') {
                 category = 'Bebidas';
+            } else if (item.category === 'porcoes') {
+                category = 'Porções';
             } else if (item.category === 'sobremesas') {
                 category = 'Sobremesas';
+            } else if (item.category === 'lanches') {
+                category = 'Lanches';
             } else if (item.category) {
                 category = String(item.category);
             }

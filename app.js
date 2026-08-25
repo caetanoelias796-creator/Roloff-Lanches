@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    Roloff Lanches - Motor do CardÃ¡pio & Delivery Online
    ========================================================================== */
 
@@ -392,7 +392,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "chopp_300",
                         "name":  "Chopp 300ml",
                         "description":  "Chopp claro geladinho na caneca 300ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/chopp_300.jpg",
                         "category":  "bebidas",
                         "price":  8.0,
                         "available":  true
@@ -401,7 +401,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "chopp_500",
                         "name":  "Chopp 500ml",
                         "description":  "Chopp claro geladinho na caneca 500ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/chopp_500.jpg",
                         "category":  "bebidas",
                         "price":  12.0,
                         "available":  true
@@ -410,7 +410,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "suco_uva_300",
                         "name":  "Suco de Uva 300ml",
                         "description":  "Suco de uva integral no copo 300ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/suco_uva_300.jpg",
                         "category":  "bebidas",
                         "price":  8.0,
                         "available":  true
@@ -419,7 +419,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "suco_uva_garrafa_500",
                         "name":  "Suco de Uva Garrafa 500ml",
                         "description":  "Garrafa de 500ml de suco de uva integral natural.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/suco_uva_garrafa_500.jpg",
                         "category":  "bebidas",
                         "price":  16.0,
                         "available":  true
@@ -428,7 +428,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "coca_zero_350",
                         "name":  "Coca-Cola Zero Lata 350ml",
                         "description":  "Refrigerante Coca-Cola sem açúcar lata 350ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/coca_zero_350.jpg",
                         "category":  "bebidas",
                         "price":  6.0,
                         "available":  true
@@ -437,7 +437,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "coca_350",
                         "name":  "Coca-Cola Lata 350ml",
                         "description":  "Refrigerante Coca-Cola tradicional lata 350ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/coca_350.jpg",
                         "category":  "bebidas",
                         "price":  6.0,
                         "available":  true
@@ -446,7 +446,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "tonica_350",
                         "name":  "Água Tônica 350ml",
                         "description":  "Refrigerante água tônica lata 350ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/tonica_350.jpg",
                         "category":  "bebidas",
                         "price":  6.0,
                         "available":  true
@@ -455,7 +455,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "fanta_laranja_350",
                         "name":  "Fanta Laranja Lata 350ml",
                         "description":  "Refrigerante Fanta Laranja lata 350ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/fanta_laranja_350.jpg",
                         "category":  "bebidas",
                         "price":  6.0,
                         "available":  true
@@ -464,7 +464,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "fanta_uva_350",
                         "name":  "Fanta Uva Lata 350ml",
                         "description":  "Refrigerante Fanta Uva lata 350ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/fanta_uva_350.jpg",
                         "category":  "bebidas",
                         "price":  6.0,
                         "available":  true
@@ -473,7 +473,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "guarana_350",
                         "name":  "Guaraná Antarctica Lata 350ml",
                         "description":  "Refrigerante Guaraná Antarctica lata 350ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/guarana_350.jpg",
                         "category":  "bebidas",
                         "price":  6.0,
                         "available":  true
@@ -482,7 +482,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "brahma_zero_350",
                         "name":  "Cerveja Brahma Zero Lata 350ml",
                         "description":  "Cerveja sem álcool Brahma lata 350ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/brahma_zero_350.jpg",
                         "category":  "bebidas",
                         "price":  8.0,
                         "available":  true
@@ -491,7 +491,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "brahma_latao_473",
                         "name":  "Cerveja Brahma Latão 473ml",
                         "description":  "Cerveja Brahma latão 473ml trincando de gelada.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/brahma_latao_473.jpg",
                         "category":  "bebidas",
                         "price":  8.0,
                         "available":  true
@@ -500,7 +500,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "polar_latao_473",
                         "name":  "Cerveja Polar Latão 473ml",
                         "description":  "Cerveja Polar latão 473ml gelada.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/polar_latao_473.jpg",
                         "category":  "bebidas",
                         "price":  8.0,
                         "available":  true
@@ -509,7 +509,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "amstel_latao_473",
                         "name":  "Cerveja Amstel Latão 473ml",
                         "description":  "Cerveja puro malte Amstel latão 473ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/amstel_latao_473.jpg",
                         "category":  "bebidas",
                         "price":  8.0,
                         "available":  true
@@ -518,7 +518,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "heineken_latao_473",
                         "name":  "Cerveja Heineken Latão 473ml",
                         "description":  "Cerveja Heineken puro malte latão 473ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/heineken_latao_473.jpg",
                         "category":  "bebidas",
                         "price":  10.0,
                         "available":  true
@@ -527,7 +527,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "agua_sem_gas_500",
                         "name":  "Água Mineral s/ Gás 500ml",
                         "description":  "Garrafa de água mineral 500ml sem gás.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/agua_sem_gas_500.jpg",
                         "category":  "bebidas",
                         "price":  4.0,
                         "available":  true
@@ -536,7 +536,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "agua_com_gas_500",
                         "name":  "Água Mineral c/ Gás 500ml",
                         "description":  "Garrafa de água mineral 500ml com gás.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/agua_com_gas_500.jpg",
                         "category":  "bebidas",
                         "price":  4.0,
                         "available":  true
@@ -545,7 +545,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "h2o_limao_500",
                         "name":  "H2OH! Limão 500ml",
                         "description":  "Bebida levemente gaseificada H2OH! sabor limão 500ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/h2o_limao_500.jpg",
                         "category":  "bebidas",
                         "price":  8.0,
                         "available":  true
@@ -554,7 +554,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "coca_600",
                         "name":  "Coca-Cola 600ml",
                         "description":  "Refrigerante Coca-Cola garrafa 600ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/coca_600.jpg",
                         "category":  "bebidas",
                         "price":  8.0,
                         "available":  true
@@ -563,7 +563,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "guarana_600",
                         "name":  "Guaraná Antarctica 600ml",
                         "description":  "Refrigerante Guaraná garrafa 600ml.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/guarana_600.jpg",
                         "category":  "bebidas",
                         "price":  8.0,
                         "available":  true
@@ -572,7 +572,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "coca_1l",
                         "name":  "Coca-Cola 1 Litro",
                         "description":  "Refrigerante Coca-Cola garrafa 1L.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/coca_1l.jpg",
                         "category":  "bebidas",
                         "price":  10.0,
                         "available":  true
@@ -581,7 +581,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "coca_2l",
                         "name":  "Coca-Cola 2 Litros",
                         "description":  "Refrigerante Coca-Cola garrafa 2L.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/coca_2l.jpg",
                         "category":  "bebidas",
                         "price":  15.0,
                         "available":  true
@@ -590,7 +590,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "fanta_laranja_2l",
                         "name":  "Fanta Laranja 2 Litros",
                         "description":  "Refrigerante Fanta Laranja garrafa 2L.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/fanta_laranja_2l.jpg",
                         "category":  "bebidas",
                         "price":  15.0,
                         "available":  true
@@ -599,7 +599,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "fanta_uva_2l",
                         "name":  "Fanta Uva 2 Litros",
                         "description":  "Refrigerante Fanta Uva garrafa 2L.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/fanta_uva_2l.jpg",
                         "category":  "bebidas",
                         "price":  15.0,
                         "available":  true
@@ -608,7 +608,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "guarana_2l",
                         "name":  "Guaraná Antarctica 2 Litros",
                         "description":  "Refrigerante Guaraná Antarctica garrafa 2L.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/guarana_2l.jpg",
                         "category":  "bebidas",
                         "price":  15.0,
                         "available":  true
@@ -617,7 +617,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "sprite_2l",
                         "name":  "Sprite 2 Litros",
                         "description":  "Refrigerante Sprite garrafa 2L.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/sprite_2l.jpg",
                         "category":  "bebidas",
                         "price":  15.0,
                         "available":  true
@@ -626,7 +626,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "caipira_pequena",
                         "name":  "Caipira Pequena",
                         "description":  "Caipirinha artesanal de frutas tamanho pequeno.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/caipira_pequena.jpg",
                         "category":  "bebidas",
                         "price":  14.0,
                         "available":  true
@@ -635,7 +635,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "caipira_grande",
                         "name":  "Caipira Grande",
                         "description":  "Caipirinha artesanal de frutas tamanho grande.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/caipira_grande.jpg",
                         "category":  "bebidas",
                         "price":  17.0,
                         "available":  true
@@ -644,7 +644,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "torre_chopp_25l",
                         "name":  "Torre de Chopp 2,5 Litros",
                         "description":  "Torre de chopp com refil de gelo térmico 2,5L.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/torre_chopp_25l.jpg",
                         "category":  "bebidas",
                         "price":  55.0,
                         "badge":  "Galera",
@@ -654,7 +654,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "id":  "torre_chopp_35l",
                         "name":  "Torre de Chopp 3,5 Litros",
                         "description":  "Torre de chopp com refil de gelo térmico 3,5L.",
-                        "image":  "assets/gourmet_bebida.png",
+                        "image":  "assets/bebidas/torre_chopp_35l.jpg",
                         "category":  "bebidas",
                         "price":  75.0,
                         "badge":  "Top Galera",
@@ -875,7 +875,48 @@ function resolveProductImage(item, categoryKey) {
     const name = (item.name || item.titulo || item.nome || '').toLowerCase();
     const currentImg = item.image || item.imagem || '';
 
-    // Mapeamento específico e preciso
+    const bebidaMap = {
+        'chopp_300': 'assets/bebidas/chopp_300.jpg',
+        'chopp_500': 'assets/bebidas/chopp_500.jpg',
+        'suco_uva_300': 'assets/bebidas/suco_uva_300.jpg',
+        'suco_uva_garrafa_500': 'assets/bebidas/suco_uva_garrafa_500.jpg',
+        'coca_zero_350': 'assets/bebidas/coca_zero_350.jpg',
+        'coca_350': 'assets/bebidas/coca_350.jpg',
+        'tonica_350': 'assets/bebidas/tonica_350.jpg',
+        'fanta_laranja_350': 'assets/bebidas/fanta_laranja_350.jpg',
+        'fanta_uva_350': 'assets/bebidas/fanta_uva_350.jpg',
+        'guarana_350': 'assets/bebidas/guarana_350.jpg',
+        'brahma_zero_350': 'assets/bebidas/brahma_zero_350.jpg',
+        'brahma_latao_473': 'assets/bebidas/brahma_latao_473.jpg',
+        'polar_latao_473': 'assets/bebidas/polar_latao_473.jpg',
+        'amstel_latao_473': 'assets/bebidas/amstel_latao_473.jpg',
+        'heineken_latao_473': 'assets/bebidas/heineken_latao_473.jpg',
+        'agua_sem_gas_500': 'assets/bebidas/agua_sem_gas_500.jpg',
+        'agua_com_gas_500': 'assets/bebidas/agua_com_gas_500.jpg',
+        'h2o_limao_500': 'assets/bebidas/h2o_limao_500.jpg',
+        'coca_600': 'assets/bebidas/coca_600.jpg',
+        'guarana_600': 'assets/bebidas/guarana_600.jpg',
+        'coca_1l': 'assets/bebidas/coca_1l.jpg',
+        'coca_2l': 'assets/bebidas/coca_2l.jpg',
+        'fanta_laranja_2l': 'assets/bebidas/fanta_laranja_2l.jpg',
+        'fanta_uva_2l': 'assets/bebidas/fanta_uva_2l.jpg',
+        'guarana_2l': 'assets/bebidas/guarana_2l.jpg',
+        'sprite_2l': 'assets/bebidas/sprite_2l.jpg',
+        'caipira_pequena': 'assets/bebidas/caipira_pequena.jpg',
+        'caipira_grande': 'assets/bebidas/caipira_grande.jpg',
+        'torre_chopp_25l': 'assets/bebidas/torre_chopp_25l.jpg',
+        'torre_chopp_35l': 'assets/bebidas/torre_chopp_35l.jpg'
+    };
+
+    if (categoryKey === 'bebidas' || (item && item.category === 'bebidas') || bebidaMap[id]) {
+        if (bebidaMap[id]) return bebidaMap[id];
+        if (currentImg && currentImg !== 'assets/gourmet_bebida.png' && currentImg !== 'assets/lanches_hero.jpg') {
+            return currentImg;
+        }
+        return 'assets/bebidas/chopp_300.jpg';
+    }
+
+    // Mapeamento especÃ­fico e preciso para lanches e porÃ§Ãµes
     if (id === 'cachorro_calabresa' || (name.includes('cachorro') && name.includes('calabresa'))) {
         return 'assets/hotdog_calabresa.jpg';
     }
@@ -894,13 +935,12 @@ function resolveProductImage(item, categoryKey) {
     if (id.includes('torre') || name.includes('torre')) {
         return 'assets/torre_de_batata.jpg';
     }
-    if (id.includes('xis') || name.startsWith('x-') || name.includes(' xis') || name.includes('hambúrguer') || name.includes('hamburguer')) {
+    if (id.includes('xis') || name.startsWith('x-') || name.includes(' xis') || name.includes('hambÃºrguer') || name.includes('hamburguer')) {
         return 'assets/xis.jpg';
     }
     if (currentImg && currentImg !== 'assets/lanches_hero.jpg' && currentImg !== 'assets/pizza_hero.png') {
         return currentImg;
     }
-    if (categoryKey === 'bebidas') return 'assets/gourmet_bebida.png';
     if (categoryKey === 'porcoes') return 'assets/porcoes_hero.jpg';
     return 'assets/lanches_hero.jpg';
 }

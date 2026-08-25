@@ -1,4 +1,4 @@
-{
+﻿{
     "menu_items":  {
                        "lanches":  [
                                        {
@@ -10,20 +10,20 @@
                                            "price":  18.0,
                                            "badge":  "Top",
                                            "available":  true,
-                                           "adicionais": {
-                                               "sache_maionese": {
-                                                   "name": "Sache Maionese",
-                                                   "price": 0.0
-                                               },
-                                               "sache_mostarda": {
-                                                   "name": "Sache Mostarda",
-                                                   "price": 0.0
-                                               },
-                                               "sache_ketchup": {
-                                                   "name": "Sache Ketchup",
-                                                   "price": 0.0
-                                               }
-                                           }
+                                           "adicionais":  {
+                                                              "sache_maionese":  {
+                                                                                     "name":  "Sache Maionese",
+                                                                                     "price":  0.0
+                                                                                 },
+                                                              "sache_mostarda":  {
+                                                                                     "name":  "Sache Mostarda",
+                                                                                     "price":  0.0
+                                                                                 },
+                                                              "sache_ketchup":  {
+                                                                                    "name":  "Sache Ketchup",
+                                                                                    "price":  0.0
+                                                                                }
+                                                          }
                                        },
                                        {
                                            "id":  "cachorro_calabresa",
@@ -380,7 +380,7 @@
                                            "id":  "chopp_300",
                                            "name":  "Chopp 300ml",
                                            "description":  "Chopp claro geladinho na caneca 300ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/chopp_300.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -389,7 +389,7 @@
                                            "id":  "chopp_500",
                                            "name":  "Chopp 500ml",
                                            "description":  "Chopp claro geladinho na caneca 500ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/chopp_500.jpg",
                                            "category":  "bebidas",
                                            "price":  12.0,
                                            "available":  true
@@ -398,7 +398,7 @@
                                            "id":  "suco_uva_300",
                                            "name":  "Suco de Uva 300ml",
                                            "description":  "Suco de uva integral no copo 300ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/suco_uva_300.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -407,7 +407,7 @@
                                            "id":  "suco_uva_garrafa_500",
                                            "name":  "Suco de Uva Garrafa 500ml",
                                            "description":  "Garrafa de 500ml de suco de uva integral natural.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/suco_uva_garrafa_500.jpg",
                                            "category":  "bebidas",
                                            "price":  16.0,
                                            "available":  true
@@ -416,7 +416,7 @@
                                            "id":  "coca_zero_350",
                                            "name":  "Coca-Cola Zero Lata 350ml",
                                            "description":  "Refrigerante Coca-Cola sem açúcar lata 350ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/coca_zero_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -425,7 +425,7 @@
                                            "id":  "coca_350",
                                            "name":  "Coca-Cola Lata 350ml",
                                            "description":  "Refrigerante Coca-Cola tradicional lata 350ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/coca_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -434,7 +434,7 @@
                                            "id":  "tonica_350",
                                            "name":  "Água Tônica 350ml",
                                            "description":  "Refrigerante água tônica lata 350ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/tonica_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -443,7 +443,7 @@
                                            "id":  "fanta_laranja_350",
                                            "name":  "Fanta Laranja Lata 350ml",
                                            "description":  "Refrigerante Fanta Laranja lata 350ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/fanta_laranja_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -452,7 +452,7 @@
                                            "id":  "fanta_uva_350",
                                            "name":  "Fanta Uva Lata 350ml",
                                            "description":  "Refrigerante Fanta Uva lata 350ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/fanta_uva_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -461,7 +461,7 @@
                                            "id":  "guarana_350",
                                            "name":  "Guaraná Antarctica Lata 350ml",
                                            "description":  "Refrigerante Guaraná Antarctica lata 350ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/guarana_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -470,7 +470,7 @@
                                            "id":  "brahma_zero_350",
                                            "name":  "Cerveja Brahma Zero Lata 350ml",
                                            "description":  "Cerveja sem álcool Brahma lata 350ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/brahma_zero_350.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -479,7 +479,7 @@
                                            "id":  "brahma_latao_473",
                                            "name":  "Cerveja Brahma Latão 473ml",
                                            "description":  "Cerveja Brahma latão 473ml trincando de gelada.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/brahma_latao_473.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -488,7 +488,7 @@
                                            "id":  "polar_latao_473",
                                            "name":  "Cerveja Polar Latão 473ml",
                                            "description":  "Cerveja Polar latão 473ml gelada.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/polar_latao_473.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -497,7 +497,7 @@
                                            "id":  "amstel_latao_473",
                                            "name":  "Cerveja Amstel Latão 473ml",
                                            "description":  "Cerveja puro malte Amstel latão 473ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/amstel_latao_473.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -506,7 +506,7 @@
                                            "id":  "heineken_latao_473",
                                            "name":  "Cerveja Heineken Latão 473ml",
                                            "description":  "Cerveja Heineken puro malte latão 473ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/heineken_latao_473.jpg",
                                            "category":  "bebidas",
                                            "price":  10.0,
                                            "available":  true
@@ -515,7 +515,7 @@
                                            "id":  "agua_sem_gas_500",
                                            "name":  "Água Mineral s/ Gás 500ml",
                                            "description":  "Garrafa de água mineral 500ml sem gás.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/agua_sem_gas_500.jpg",
                                            "category":  "bebidas",
                                            "price":  4.0,
                                            "available":  true
@@ -524,7 +524,7 @@
                                            "id":  "agua_com_gas_500",
                                            "name":  "Água Mineral c/ Gás 500ml",
                                            "description":  "Garrafa de água mineral 500ml com gás.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/agua_com_gas_500.jpg",
                                            "category":  "bebidas",
                                            "price":  4.0,
                                            "available":  true
@@ -533,7 +533,7 @@
                                            "id":  "h2o_limao_500",
                                            "name":  "H2OH! Limão 500ml",
                                            "description":  "Bebida levemente gaseificada H2OH! sabor limão 500ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/h2o_limao_500.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -542,7 +542,7 @@
                                            "id":  "coca_600",
                                            "name":  "Coca-Cola 600ml",
                                            "description":  "Refrigerante Coca-Cola garrafa 600ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/coca_600.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -551,7 +551,7 @@
                                            "id":  "guarana_600",
                                            "name":  "Guaraná Antarctica 600ml",
                                            "description":  "Refrigerante Guaraná garrafa 600ml.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/guarana_600.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -560,7 +560,7 @@
                                            "id":  "coca_1l",
                                            "name":  "Coca-Cola 1 Litro",
                                            "description":  "Refrigerante Coca-Cola garrafa 1L.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/coca_1l.jpg",
                                            "category":  "bebidas",
                                            "price":  10.0,
                                            "available":  true
@@ -569,7 +569,7 @@
                                            "id":  "coca_2l",
                                            "name":  "Coca-Cola 2 Litros",
                                            "description":  "Refrigerante Coca-Cola garrafa 2L.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/coca_2l.jpg",
                                            "category":  "bebidas",
                                            "price":  15.0,
                                            "available":  true
@@ -578,7 +578,7 @@
                                            "id":  "fanta_laranja_2l",
                                            "name":  "Fanta Laranja 2 Litros",
                                            "description":  "Refrigerante Fanta Laranja garrafa 2L.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/fanta_laranja_2l.jpg",
                                            "category":  "bebidas",
                                            "price":  15.0,
                                            "available":  true
@@ -587,7 +587,7 @@
                                            "id":  "fanta_uva_2l",
                                            "name":  "Fanta Uva 2 Litros",
                                            "description":  "Refrigerante Fanta Uva garrafa 2L.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/fanta_uva_2l.jpg",
                                            "category":  "bebidas",
                                            "price":  15.0,
                                            "available":  true
@@ -596,7 +596,7 @@
                                            "id":  "guarana_2l",
                                            "name":  "Guaraná Antarctica 2 Litros",
                                            "description":  "Refrigerante Guaraná Antarctica garrafa 2L.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/guarana_2l.jpg",
                                            "category":  "bebidas",
                                            "price":  15.0,
                                            "available":  true
@@ -605,7 +605,7 @@
                                            "id":  "sprite_2l",
                                            "name":  "Sprite 2 Litros",
                                            "description":  "Refrigerante Sprite garrafa 2L.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/sprite_2l.jpg",
                                            "category":  "bebidas",
                                            "price":  15.0,
                                            "available":  true
@@ -614,7 +614,7 @@
                                            "id":  "caipira_pequena",
                                            "name":  "Caipira Pequena",
                                            "description":  "Caipirinha artesanal de frutas tamanho pequeno.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/caipira_pequena.jpg",
                                            "category":  "bebidas",
                                            "price":  14.0,
                                            "available":  true
@@ -623,7 +623,7 @@
                                            "id":  "caipira_grande",
                                            "name":  "Caipira Grande",
                                            "description":  "Caipirinha artesanal de frutas tamanho grande.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/caipira_grande.jpg",
                                            "category":  "bebidas",
                                            "price":  17.0,
                                            "available":  true
@@ -632,7 +632,7 @@
                                            "id":  "torre_chopp_25l",
                                            "name":  "Torre de Chopp 2,5 Litros",
                                            "description":  "Torre de chopp com refil de gelo térmico 2,5L.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/torre_chopp_25l.jpg",
                                            "category":  "bebidas",
                                            "price":  55.0,
                                            "badge":  "Galera",
@@ -642,7 +642,7 @@
                                            "id":  "torre_chopp_35l",
                                            "name":  "Torre de Chopp 3,5 Litros",
                                            "description":  "Torre de chopp com refil de gelo térmico 3,5L.",
-                                           "image":  "assets/gourmet_bebida.png",
+                                           "image":  "assets/bebidas/torre_chopp_35l.jpg",
                                            "category":  "bebidas",
                                            "price":  75.0,
                                            "badge":  "Top Galera",
@@ -661,20 +661,20 @@
                                           }
                                       ]
                    },
-    "adicionais": {
-        "sache_maionese": {
-            "name": "Sache Maionese",
-            "price": 0.0
-        },
-        "sache_mostarda": {
-            "name": "Sache Mostarda",
-            "price": 0.0
-        },
-        "sache_ketchup": {
-            "name": "Sache Ketchup",
-            "price": 0.0
-        }
-    },
+    "adicionais":  {
+                       "sache_maionese":  {
+                                              "name":  "Sache Maionese",
+                                              "price":  0.0
+                                          },
+                       "sache_mostarda":  {
+                                              "name":  "Sache Mostarda",
+                                              "price":  0.0
+                                          },
+                       "sache_ketchup":  {
+                                             "name":  "Sache Ketchup",
+                                             "price":  0.0
+                                         }
+                   },
     "settings":  {
                      "companyName":  "Roloff Lanches",
                      "slogan":  "Lanches Artesanais | Porções | Bebidas",
