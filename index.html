@@ -48,15 +48,15 @@
                 </div>
             </div>
             
-            <div class="pizzeria-brand-wrapper">
-                <img src="assets/logo.png" alt="Roloff Lanches Logo" class="pizzeria-logo" onerror="this.style.display='none'">
-                <h1 class="pizzeria-title" id="headerCompanyName">Roloff Lanches</h1>
+            <div class="brand-wrapper pizzeria-brand-wrapper">
+                <img src="assets/logo.png" alt="Roloff Lanches Logo" class="brand-logo pizzeria-logo" onerror="this.style.display='none'">
+                <h1 class="brand-title pizzeria-title" id="headerCompanyName">Roloff Lanches</h1>
             </div>
-            <p class="pizzeria-subtitle" id="headerCompanySlogan">Lanches Artesanais | Porções | Bebidas</p>
+            <p class="brand-subtitle pizzeria-subtitle" id="headerCompanySlogan">Lanches Artesanais | Porções | Bebidas</p>
             
             <div class="hero-slogan">
-                <span class="tag">Pão quentinho &amp; Carne suculenta</span>
-                <span class="tag bg-green">Ingredientes frescos</span>
+                <span class="tag">🍔 Pão quentinho &amp; Hambúrguer suculento</span>
+                <span class="tag bg-green">✨ Ingredientes selecionados</span>
                 <button id="promoBtn" class="promo-tag-btn blinking-btn" onclick="openPromoModal(true)" style="display: none;">
                     <span class="material-symbols-rounded" style="font-size: 16px; margin-right: 4px; vertical-align: middle;">local_offer</span>
                     Promoção do dia 🔥
@@ -72,7 +72,6 @@
                 <a href="#lanches-section" class="nav-link active" onclick="setActiveCategoryTab(event, 'lanches-section')">🍔 Lanches</a>
                 <a href="#porcoes-section" class="nav-link" onclick="setActiveCategoryTab(event, 'porcoes-section')">🍟 Porções</a>
                 <a href="#bebidas-section" class="nav-link" onclick="setActiveCategoryTab(event, 'bebidas-section')">🥤 Bebidas</a>
-                <a href="#sobremesas-section" class="nav-link" onclick="setActiveCategoryTab(event, 'sobremesas-section')">🍰 Sobremesas</a>
             </nav>
             
             <div class="search-box">
@@ -106,16 +105,8 @@
 
                 <!-- Section: Bebidas -->
                 <section id="bebidas-section" class="menu-category-section">
-                    <h2 class="category-title">🥤 Bebidas</h2>
+                    <h2 class="category-title">🥤 Bebidas Geladas</h2>
                     <div class="items-grid" id="bebidasGrid">
-                        <!-- Dynamically filled by JS -->
-                    </div>
-                </section>
-
-                <!-- Section: Sobremesas -->
-                <section id="sobremesas-section" class="menu-category-section">
-                    <h2 class="category-title">🍰 Sobremesas &amp; Doces</h2>
-                    <div class="items-grid" id="sobremesasGrid">
                         <!-- Dynamically filled by JS -->
                     </div>
                 </section>

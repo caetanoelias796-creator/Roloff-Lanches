@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Roloff Lanches - CardÃ¡pio do Cliente (Client Menu Design System)
    Identidade Visual: BordÃ´ (#74112B) + Dourado (#DCA744) + Branco (#FFFFFF / #FAF8F5)
    ========================================================================== */
@@ -215,7 +215,8 @@ a {
     background-color: #C62828;
 }
 
-.pizzeria-brand-wrapper {
+.pizzeria-brand-wrapper,
+.brand-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -223,7 +224,8 @@ a {
     margin-bottom: 4px;
 }
 
-.pizzeria-logo {
+.pizzeria-logo,
+.brand-logo {
     width: 92px;
     height: 92px;
     border-radius: 50%;
@@ -235,11 +237,13 @@ a {
     transition: transform 0.3s ease;
 }
 
-.pizzeria-logo:hover {
+.pizzeria-logo:hover,
+.brand-logo:hover {
     transform: scale(1.04) rotate(1deg);
 }
 
-.pizzeria-title {
+.pizzeria-title,
+.brand-title {
     font-family: 'Outfit', sans-serif;
     font-size: 32px;
     font-weight: 800;
@@ -249,7 +253,8 @@ a {
     color: var(--primary);
 }
 
-.pizzeria-subtitle {
+.pizzeria-subtitle,
+.brand-subtitle {
     font-size: 14px;
     color: var(--text-muted);
     margin-bottom: 14px;
@@ -505,15 +510,17 @@ a {
 }
 
 .product-title {
-    font-size: 16px;
-    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    font-size: 16.5px;
+    font-weight: 800;
     color: var(--text-main);
     margin-bottom: 6px;
     line-height: 1.3;
+    letter-spacing: -0.2px;
 }
 
 .product-desc {
-    font-size: 12.5px;
+    font-size: 13px;
     color: var(--text-muted);
     line-height: 1.45;
     margin-bottom: 16px;
@@ -529,15 +536,29 @@ a {
     align-items: center;
     justify-content: space-between;
     margin-top: auto;
-    padding-top: 10px;
-    border-top: 1px dashed rgba(116, 17, 43, 0.08);
+    padding-top: 12px;
+    border-top: 1px dashed rgba(116, 17, 43, 0.10);
+    gap: 8px;
+}
+
+.product-price-wrapper {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+}
+
+.product-price-prefix {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-gold-dark);
 }
 
 .product-price {
-    font-size: 18px;
-    font-weight: 800;
+    font-size: 20px;
+    font-weight: 900;
     color: var(--primary);
     font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.4px;
 }
 
 /* ==========================================================================

@@ -660,18 +660,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "badge":  "Top Galera",
                         "available":  true
                     }
-                ],
-    "sobremesas":  [
-                       {
-                           "id":  "sobremesa_dia",
-                           "name":  "Sobremesa do Dia",
-                           "description":  "Consulte as opções de doces e sobremesas especiais disponíveis hoje.",
-                           "image":  "assets/gourmet_sobremesa.png",
-                           "category":  "sobremesas",
-                           "price":  15.0,
-                           "available":  true
-                       }
-                   ]
+                ]
 },
     "adicionais":  {
                        "sache_maionese":  {
@@ -913,7 +902,6 @@ function resolveProductImage(item, categoryKey) {
     }
     if (categoryKey === 'bebidas') return 'assets/gourmet_bebida.png';
     if (categoryKey === 'porcoes') return 'assets/porcoes_hero.jpg';
-    if (categoryKey === 'sobremesas') return 'assets/gourmet_sobremesa.png';
     return 'assets/lanches_hero.jpg';
 }
 
@@ -921,7 +909,6 @@ function renderAllSections() {
     renderCategoryGrid('lanches', 'lanchesGrid');
     renderCategoryGrid('porcoes', 'porcoesGrid');
     renderCategoryGrid('bebidas', 'bebidasGrid');
-    renderCategoryGrid('sobremesas', 'sobremesasGrid');
     updateCartUI();
 }
 
@@ -951,7 +938,7 @@ function renderCategoryGrid(categoryKey, gridElementId) {
         };
 
         const badgeHTML = item.badge ? `<span class="product-badge">${item.badge}</span>` : '';
-        const priceFormatted = Number(item.price || 0).toFixed(2);
+        const priceFormatted = Number(item.price || 0).toFixed(2).replace('.', ',');
         const fallbackImg = resolveProductImage(item, categoryKey);
         const imgSrc = resolveProductImage(item, categoryKey);
 
@@ -964,8 +951,11 @@ function renderCategoryGrid(categoryKey, gridElementId) {
                 <h3 class="product-title">${item.name}</h3>
                 <p class="product-desc">${item.description || ''}</p>
                 <div class="product-footer">
-                    <span class="product-price">R$ ${priceFormatted}</span>
-                    <button class="btn btn-sm btn-primary" onclick="openProductCustomizer('${categoryKey}', '${item.id}')">
+                    <div class="product-price-wrapper">
+                        <span class="product-price-prefix">R$</span>
+                        <span class="product-price">${priceFormatted}</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="openProductCustomizer('${categoryKey}', '${item.id}')" title="Personalizar e pedir">
                         <span class="material-symbols-rounded">add</span>
                         <span>Pedir</span>
                     </button>
