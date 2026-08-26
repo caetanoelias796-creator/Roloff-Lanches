@@ -2123,64 +2123,69 @@ function printTableComandaSummary(comandaIdOrTable) {
         }
     }
 
-    const printSection = document.getElementById('printSection');
-    if (!printSection) return;
-
     let allItemsHTML = '';
     relatedOrders.forEach((ord) => {
         allItemsHTML += `
-            <div style="margin-top: 8px; padding-bottom: 4px; border-bottom: 1px dashed #999;">
-                <div style="font-weight: bold; font-size: 11px; margin-bottom: 2px;">
-                    PEDIDO #${ord.id} - ${ord.time || ''} (${ord.waiterName || 'Garçom'})
+            <div style="margin-top: 8px; padding-bottom: 6px; border-bottom: 1px dashed #777;">
+                <div style="font-weight: 800; font-size: 12px; margin-bottom: 4px; display: flex; justify-content: space-between;">
+                    <span>PEDIDO #${ord.id} (${ord.time || ''})</span>
+                    <span>${ord.waiterName ? `Garçom: ${ord.waiterName}` : 'Salão'}</span>
                 </div>
         `;
         (ord.cart || []).forEach(item => {
+            const itemTotal = Number(item.totalPrice || (item.singlePrice * item.quantity) || 0);
             allItemsHTML += `
-                <div class="ticket-item" style="font-size: 11px;">
+                <div class="ticket-item" style="margin-bottom: 5px;">
                     <div class="ticket-item-header">
                         <span>${item.quantity}x ${item.name}</span>
-                        <span>R$ ${Number(item.totalPrice || (item.singlePrice * item.quantity) || 0).toFixed(2)}</span>
+                        <span>R$ ${itemTotal.toFixed(2).replace('.', ',')}</span>
                     </div>
-                    ${item.notes ? `<div class="ticket-item-details">Obs: "${item.notes}"</div>` : ''}
+                    ${item.notes ? `<div class="ticket-item-notes">OBS: "${item.notes}"</div>` : ''}
                 </div>
             `;
         });
         allItemsHTML += `</div>`;
     });
 
-    printSection.innerHTML = `
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('pt-BR');
+    const formattedTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    const ticketHTML = `
         <div class="ticket-header">
             <div class="ticket-title">${(menuData?.settings?.companyName || 'ROLOFF LANCHES').toUpperCase()}</div>
-            <div style="font-size: 11px;">${menuData?.settings?.address || 'Atendimento Presencial'}</div>
-            <div style="font-size: 11px;">Tel: ${menuData?.settings?.whatsappFormatted || menuData?.settings?.whatsapp || 'WhatsApp'}</div>
+            <div class="ticket-subtitle">Lanches Artesanais • Porções • Bebidas</div>
+            <div class="ticket-subtitle">${menuData?.settings?.address || 'Atendimento Presencial'}</div>
+            <div class="ticket-contact">WhatsApp: ${menuData?.settings?.whatsappFormatted || menuData?.settings?.whatsapp || '(54) 99698-5724'}</div>
             <div class="ticket-separator"></div>
-            <div style="font-size: 15px; font-weight: bold;">EXTRATO DA COMANDA • ${tableLabel.toUpperCase()}</div>
-            <div style="font-size: 10px; color: #555;">ID: ${comandaId}</div>
-            <div style="font-size: 11px;">Data: ${new Date().toLocaleDateString('pt-BR')} | ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+            <div class="ticket-order-badge">EXTRATO DE CONTA • ${tableLabel.toUpperCase()}</div>
+            <div class="ticket-meta-info">Comanda / Cliente: <b>${(firstOrder.clientName || 'Cliente').toUpperCase()}</b></div>
+            <div class="ticket-meta-info">Emissão: ${formattedDate} às ${formattedTime}</div>
         </div>
         
         <div class="ticket-separator"></div>
         
         <div>
-            <div class="ticket-section-title">Consumo Acumulado na Mesa</div>
+            <div class="ticket-section-title">Consumo Detalhado da Mesa</div>
             <div>
                 ${allItemsHTML}
             </div>
         </div>
         
-        <div class="ticket-totals" style="margin-top: 12px; border-top: 2px solid #000; padding-top: 6px;">
-            <div class="ticket-total-row grand-total" style="font-size: 16px; font-weight: bold;">
+        <div class="ticket-totals" style="margin-top: 10px; border-top: 2px solid #000; padding-top: 6px;">
+            <div class="ticket-total-row grand-total">
                 <span>TOTAL DA MESA:</span>
-                <span>R$ ${totalAcumulado.toFixed(2)}</span>
+                <span>R$ ${totalAcumulado.toFixed(2).replace('.', ',')}</span>
             </div>
         </div>
         
-        <div class="ticket-footer" style="margin-top: 15px;">
+        <div class="ticket-footer" style="margin-top: 14px;">
+            <span>CONFERÊNCIA DE CONTA • NÃO É DOCUMENTO FISCAL</span><br>
             <span>ROLOFF LANCHES - OBRIGADO PELA PREFERÊNCIA!</span>
         </div>
     `;
 
-    window.print();
+    openThermalPrintWindow(ticketHTML, `Extrato - ${tableLabel}`);
 }
 
 function closeTableComanda(orderId) {
@@ -2386,8 +2391,182 @@ function clearAllOrders() {
 }
 
 /* ==========================================================================
-   Thermal Receipt Printing Integration
+   Thermal Receipt Printing Integration (Pop-up Window & Pro Formatting)
    ========================================================================== */
+function getThermalPrintCSS() {
+    return `
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #eef1f5;
+            font-family: 'Courier New', Courier, monospace, sans-serif;
+            color: #000000;
+            font-size: 13px;
+            line-height: 1.35;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .thermal-ticket-wrapper {
+            background: #ffffff;
+            width: 80mm;
+            max-width: 100%;
+            padding: 16px 14px;
+            border: 1px dashed #777777;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        }
+        .screen-buttons-bar {
+            margin-top: 16px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .btn-print-action {
+            background: #74112B;
+            color: #ffffff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(116, 17, 43, 0.35);
+        }
+        .btn-close-action {
+            background: #555555;
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .ticket-header { text-align: center; margin-bottom: 8px; }
+        .ticket-title { font-size: 18px; font-weight: 900; letter-spacing: 0.5px; }
+        .ticket-subtitle { font-size: 11px; color: #222; margin-top: 2px; }
+        .ticket-contact { font-size: 11.5px; font-weight: 700; margin-top: 2px; }
+        .ticket-separator { border-top: 1px dashed #000000; margin: 8px 0; }
+        .ticket-double-separator { border-top: 2px solid #000000; margin: 8px 0; }
+        .ticket-order-badge {
+            display: inline-block;
+            border: 2px solid #000000;
+            padding: 4px 10px;
+            font-size: 15px;
+            font-weight: 900;
+            margin: 6px 0;
+            text-align: center;
+        }
+        .ticket-meta-info { font-size: 11.5px; margin-top: 2px; }
+        .ticket-section-title {
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            border-bottom: 1px solid #000000;
+            padding-bottom: 2px;
+            margin-bottom: 6px;
+        }
+        .ticket-info-row { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 12px; }
+        .ticket-info-label { font-weight: 800; color: #000000; }
+        .ticket-item { margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px dotted #cccccc; }
+        .ticket-item:last-child { border-bottom: none; }
+        .ticket-item-header { display: flex; justify-content: space-between; font-weight: 800; font-size: 13.5px; }
+        .ticket-item-notes {
+            font-size: 11.5px;
+            font-style: italic;
+            background: #f4f4f4;
+            border-left: 2px solid #000000;
+            padding: 2px 6px;
+            margin-top: 3px;
+        }
+        .ticket-totals { margin-top: 8px; }
+        .ticket-total-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; }
+        .ticket-total-row.grand-total {
+            font-size: 16px;
+            font-weight: 900;
+            border-top: 2px solid #000000;
+            border-bottom: 2px solid #000000;
+            padding: 6px 0;
+            margin-top: 6px;
+        }
+        .ticket-footer {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 14px;
+            padding-top: 8px;
+            border-top: 1px dashed #000000;
+        }
+        @media print {
+            body { background: transparent; padding: 0; }
+            .thermal-ticket-wrapper { border: none; box-shadow: none; padding: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+    `;
+}
+
+function openThermalPrintWindow(contentHtml, documentTitle = 'Impressão - Roloff Lanches') {
+    const oldSection = document.getElementById('printSection');
+    if (oldSection) oldSection.innerHTML = '';
+
+    const printWindow = window.open('', '_blank', 'width=460,height=720,menubar=no,toolbar=no,location=no,status=no');
+    if (!printWindow) {
+        let printIframe = document.getElementById('thermalPrintIframe');
+        if (!printIframe) {
+            printIframe = document.createElement('iframe');
+            printIframe.id = 'thermalPrintIframe';
+            printIframe.style.position = 'fixed';
+            printIframe.style.right = '0';
+            printIframe.style.bottom = '0';
+            printIframe.style.width = '0';
+            printIframe.style.height = '0';
+            printIframe.style.border = 'none';
+            document.body.appendChild(printIframe);
+        }
+        const doc = printIframe.contentWindow.document;
+        doc.open();
+        doc.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${documentTitle}</title><style>${getThermalPrintCSS()}</style></head><body><div class="thermal-ticket-wrapper">${contentHtml}</div></body></html>`);
+        doc.close();
+        setTimeout(() => {
+            printIframe.contentWindow.focus();
+            printIframe.contentWindow.print();
+        }, 350);
+        return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <title>${documentTitle}</title>
+            <style>
+                ${getThermalPrintCSS()}
+            </style>
+        </head>
+        <body>
+            <div class="thermal-ticket-wrapper">
+                ${contentHtml}
+            </div>
+            <div class="screen-buttons-bar no-print">
+                <button onclick="window.print()" class="btn-print-action">🖨️ Imprimir</button>
+                <button onclick="window.close()" class="btn-close-action">Fechar Janela</button>
+            </div>
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.focus();
+                        window.print();
+                    }, 350);
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
 function printOrderTicket(id) {
     const order = orders.find(o => o.id === id);
     if (!order) return;
@@ -2395,46 +2574,29 @@ function printOrderTicket(id) {
     const isTableOrder = order.checkoutType === 'mesa' || !!order.table || !!order.mesa || order.origin === 'Garçom';
     const tableLabel = order.table || (order.mesa ? (String(order.mesa).toLowerCase().includes('mesa') ? order.mesa : `Mesa ${order.mesa}`) : 'Mesa Salão');
 
-    const printSection = document.getElementById('printSection');
-    
     let itemsHTML = '';
     const orderCart = order.cart || [];
     orderCart.forEach(item => {
-        if (item.type === 'pizza') {
-            itemsHTML += `
-                <div class="ticket-item">
-                    <div class="ticket-item-header">
-                        <span>${item.quantity}x Pizza ${item.sizeName}</span>
-                        <span>R$ ${item.totalPrice.toFixed(2)}</span>
-                    </div>
-                    <div class="ticket-item-details">
-                        Sabores: ${item.flavorNames.join(' / ')}<br>
-                        Borda: ${item.borderName}
-                        ${item.notes ? `<br>Obs: "${item.notes}"` : ''}
-                    </div>
+        const itemPrice = Number(item.totalPrice || (item.singlePrice * (item.quantity || 1)) || 0);
+        itemsHTML += `
+            <div class="ticket-item">
+                <div class="ticket-item-header">
+                    <span>${item.quantity}x ${item.name}</span>
+                    <span>R$ ${itemPrice.toFixed(2).replace('.', ',')}</span>
                 </div>
-            `;
-        } else {
-            itemsHTML += `
-                <div class="ticket-item">
-                    <div class="ticket-item-header">
-                        <span>${item.quantity}x ${item.name}</span>
-                        <span>R$ ${item.totalPrice.toFixed(2)}</span>
-                    </div>
-                    ${item.notes ? `<div class="ticket-item-details">Obs: "${item.notes}"</div>` : ''}
-                </div>
-            `;
-        }
+                ${item.notes ? `<div class="ticket-item-notes">OBS: "${item.notes}"</div>` : ''}
+            </div>
+        `;
     });
     
     let addressHTML = 'RETIRADA NO BALCÃO';
-    let entregaLabel = 'NÃO - RETIRADA';
+    let entregaLabel = 'NÃO - RETIRADA NO BALCÃO';
     if (order.checkoutType === 'delivery' && order.address) {
         const addr = order.address;
         addressHTML = `
-            ${addr.street.toUpperCase()}, Nº ${addr.number}
-            BAIRRO: ${addr.neighborhood.toUpperCase()}
-            ${addr.reference ? `REF: ${addr.reference.toUpperCase()}` : ''}
+            ${addr.street ? addr.street.toUpperCase() : ''}, Nº ${addr.number || 'S/N'}<br>
+            BAIRRO: ${addr.neighborhood ? addr.neighborhood.toUpperCase() : ''}
+            ${addr.reference ? `<br>REF: ${addr.reference.toUpperCase()}` : ''}
         `;
         entregaLabel = 'SIM - TELE-ENTREGA';
     } else if (isTableOrder) {
@@ -2449,20 +2611,21 @@ function printOrderTicket(id) {
     }
 
     const generalNotesTicketHTML = (order.generalNotes || (isTableOrder && order.notes)) ? `
-        <div style="margin-top: 6px; font-size: 11px; font-weight: bold; border: 1px dashed #000; padding: 4px;">
-            OBS. MESA: ${(order.generalNotes || order.notes).toUpperCase()}
+        <div style="margin-top: 6px; font-size: 11.5px; font-weight: bold; border: 1px dashed #000; padding: 4px; background: #fafafa;">
+            OBS. GERAIS: ${(order.generalNotes || order.notes).toUpperCase()}
         </div>
     ` : '';
     
-    printSection.innerHTML = `
+    const ticketHTML = `
         <div class="ticket-header">
             <div class="ticket-title">${(menuData?.settings?.companyName || 'ROLOFF LANCHES').toUpperCase()}</div>
-            <div style="font-size: 11px;">${menuData?.settings?.address || 'Atendimento Presencial & Delivery'}</div>
-            <div style="font-size: 11px;">Tel: ${menuData?.settings?.whatsappFormatted || menuData?.settings?.whatsapp || 'WhatsApp'}</div>
+            <div class="ticket-subtitle">Lanches Artesanais • Porções • Bebidas</div>
+            <div class="ticket-subtitle">${menuData?.settings?.address || 'Atendimento Presencial & Delivery'}</div>
+            <div class="ticket-contact">WhatsApp: ${menuData?.settings?.whatsappFormatted || menuData?.settings?.whatsapp || '(54) 99698-5724'}</div>
             <div class="ticket-separator"></div>
-            <div style="font-size: 14px; font-weight: bold;">PEDIDO #${order.id} ${isTableOrder ? `• ${tableLabel.toUpperCase()}` : ''}</div>
-            <div style="font-size: 11px;">Status: ${order.status.toUpperCase()}</div>
-            <div style="font-size: 11px;">Data: ${order.date} | Horário: ${order.time}</div>
+            <div class="ticket-order-badge">PEDIDO #${order.id} ${isTableOrder ? `• ${tableLabel.toUpperCase()}` : ''}</div>
+            <div class="ticket-meta-info">Status: <b>${order.status.toUpperCase()}</b></div>
+            <div class="ticket-meta-info">Data: ${order.date} | Horário: ${order.time}</div>
         </div>
         
         <div>
@@ -2471,7 +2634,7 @@ function printOrderTicket(id) {
                 <span class="ticket-info-label">CLIENTE/MESA:</span>
                 <span style="font-weight: bold;">${order.clientName.toUpperCase()}</span>
             </div>
-            ${!isTableOrder ? `
+            ${!isTableOrder && order.clientPhone ? `
             <div class="ticket-info-row">
                 <span class="ticket-info-label">TELEFONE:</span>
                 <span>${order.clientPhone}</span>
@@ -2482,16 +2645,16 @@ function printOrderTicket(id) {
                 <span>${entregaLabel}</span>
             </div>
             ${(order.pickupTime || order.horarioRetirada) ? `
-            <div class="ticket-info-row" style="margin-top: 4px; background: #eee; padding: 2px 4px; border: 1px dashed #000;">
+            <div class="ticket-info-row" style="margin-top: 4px; background: #eee; padding: 3px 5px; border: 1px dashed #000;">
                 <span class="ticket-info-label" style="font-weight: bold;">🕐 RETIRADA / PREVISÃO:</span>
                 <span style="font-weight: 800; font-size: 13px;">${(order.pickupTime || order.horarioRetirada).toUpperCase()}</span>
             </div>
             ` : ''}
-            <div style="margin-top: 4px;">
+            <div style="margin-top: 5px;">
                 <span class="ticket-info-label">LOCAL / ENDEREÇO:</span><br>
-                <span style="font-size: 11px; font-weight: bold;">${addressHTML}</span>
+                <span style="font-size: 12px; font-weight: bold; line-height: 1.3;">${addressHTML}</span>
             </div>
-            <div class="ticket-info-row" style="margin-top: 4px;">
+            <div class="ticket-info-row" style="margin-top: 5px;">
                 <span class="ticket-info-label">PAGAMENTO:</span>
                 <span>${paymentHTML}</span>
             </div>
@@ -2510,15 +2673,15 @@ function printOrderTicket(id) {
         <div class="ticket-totals">
             <div class="ticket-total-row">
                 <span>SUBTOTAL:</span>
-                <span>R$ ${order.subtotal.toFixed(2)}</span>
+                <span>R$ ${Number(order.subtotal || 0).toFixed(2).replace('.', ',')}</span>
             </div>
             <div class="ticket-total-row">
-                <span>TAXA ENTREGA:</span>
-                <span>${order.deliveryFee === 0 ? 'GRÁTIS' : `R$ ${order.deliveryFee.toFixed(2)}`}</span>
+                <span>TAXA DE ENTREGA:</span>
+                <span>${Number(order.deliveryFee || 0) === 0 ? 'GRÁTIS' : `R$ ${Number(order.deliveryFee).toFixed(2).replace('.', ',')}`}</span>
             </div>
             <div class="ticket-total-row grand-total">
                 <span>TOTAL A PAGAR:</span>
-                <span>R$ ${order.total.toFixed(2)}</span>
+                <span>R$ ${Number(order.total || 0).toFixed(2).replace('.', ',')}</span>
             </div>
         </div>
         
@@ -2528,8 +2691,7 @@ function printOrderTicket(id) {
         </div>
     `;
     
-    // Launch print
-    window.print();
+    openThermalPrintWindow(ticketHTML, `Pedido #${order.id}`);
 }
 
 function printKitchenTicket(id) {
@@ -2539,67 +2701,50 @@ function printKitchenTicket(id) {
     const isTableOrder = order.checkoutType === 'mesa' || !!order.table || !!order.mesa || order.origin === 'Garçom';
     const tableLabel = order.table || (order.mesa ? (String(order.mesa).toLowerCase().includes('mesa') ? order.mesa : `Mesa ${order.mesa}`) : 'Mesa Salão');
 
-    const printSection = document.getElementById('printSection');
-    
     let itemsHTML = '';
     const orderCart = order.cart || [];
     orderCart.forEach(item => {
-        if (item.type === 'pizza') {
-            itemsHTML += `
-                <div class="ticket-item" style="margin-bottom: 15px;">
-                    <div class="ticket-item-header" style="font-weight: bold; font-size: 14px; border-bottom: 1px dashed #000; padding-bottom: 2px;">
-                        <span>${item.quantity}x Pizza ${item.sizeName.toUpperCase()}</span>
-                    </div>
-                    <div class="ticket-item-details" style="font-size: 13px; line-height: 1.4; margin-top: 4px; padding-left: 8px;">
-                        • SABORES: ${item.flavorNames.join(' / ').toUpperCase()}<br>
-                        • BORDA: ${item.borderName.toUpperCase()}
-                        ${item.notes ? `<br>• OBS: <span style="border: 1px solid #000; padding: 1px 4px; font-weight: bold; border-radius: 2px;">"${item.notes.toUpperCase()}"</span>` : ''}
-                    </div>
+        itemsHTML += `
+            <div style="margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px dashed #000;">
+                <div style="font-weight: 900; font-size: 15px;">
+                    <span>${item.quantity}x ${item.name.toUpperCase()}</span>
                 </div>
-            `;
-        } else {
-            itemsHTML += `
-                <div class="ticket-item" style="margin-bottom: 15px;">
-                    <div class="ticket-item-header" style="font-weight: bold; font-size: 15px; border-bottom: 1px dashed #000; padding-bottom: 2px;">
-                        <span>${item.quantity}x ${item.name.toUpperCase()}</span>
+                ${item.notes ? `
+                    <div style="font-size: 13px; line-height: 1.4; margin-top: 4px; padding-left: 6px;">
+                        • OBS: <span style="border: 1px solid #000; padding: 1px 5px; font-weight: bold; background: #f0f0f0;">"${item.notes.toUpperCase()}"</span>
                     </div>
-                    ${item.notes ? `
-                        <div class="ticket-item-details" style="font-size: 13px; line-height: 1.4; margin-top: 4px; padding-left: 8px;">
-                            • OBS: <span style="border: 1px solid #000; padding: 1px 4px; font-weight: bold; border-radius: 2px;">"${item.notes.toUpperCase()}"</span>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }
+                ` : ''}
+            </div>
+        `;
     });
     
-    let tipoCozinha = order.checkoutType === 'delivery' ? '🚗 DELIVERY' : '🏪 RETIRADA';
+    let tipoCozinha = order.checkoutType === 'delivery' ? '🚗 DELIVERY' : '🏪 RETIRADA NO BALCÃO';
     if (isTableOrder) {
         tipoCozinha = `🍽️ MESA / SALÃO (${order.origin ? order.origin.toUpperCase() : 'GARÇOM'})`;
     }
 
     const pickupKitchenHTML = (order.pickupTime || order.horarioRetirada) ? `
-        <div style="margin-bottom: 8px; font-size: 14px; font-weight: 800; border: 2px solid #000; padding: 4px 8px; text-align: center; background: #fff;">
+        <div style="margin-bottom: 8px; font-size: 14px; font-weight: 800; border: 2px solid #000; padding: 4px 8px; text-align: center; background: #f0f0f0;">
             🕐 RETIRADA / PREVISÃO: ${(order.pickupTime || order.horarioRetirada).toUpperCase()}
         </div>
     ` : '';
 
     const generalNotesKitchenHTML = (order.generalNotes || (isTableOrder && order.notes)) ? `
-        <div style="margin-bottom: 10px; font-size: 13px; font-weight: bold; border: 2px solid #000; padding: 6px; text-align: center;">
+        <div style="margin-bottom: 10px; font-size: 13px; font-weight: bold; border: 2px solid #000; padding: 6px; text-align: center; background: #fff;">
             OBS. DA MESA: ${(order.generalNotes || order.notes).toUpperCase()}
         </div>
     ` : '';
 
-    printSection.innerHTML = `
-        <div class="ticket-header" style="text-align: center; margin-bottom: 15px; border-bottom: 2px dashed #000; padding-bottom: 10px;">
-            <div class="ticket-title" style="font-size: 18px; font-weight: bold; letter-spacing: 1px;">COZINHA &amp; PRODUÇÃO</div>
+    const ticketHTML = `
+        <div class="ticket-header" style="text-align: center; margin-bottom: 12px; border-bottom: 2px dashed #000; padding-bottom: 8px;">
+            <div class="ticket-title" style="font-size: 19px; font-weight: 900; letter-spacing: 1px;">COZINHA &amp; PRODUÇÃO</div>
             <div class="ticket-separator"></div>
-            <div style="font-size: 22px; font-weight: 800; margin: 5px 0;">PEDIDO #${order.id}</div>
-            ${isTableOrder ? `<div style="font-size: 18px; font-weight: 800; background: #000; color: #fff; padding: 4px; margin: 4px 0; border-radius: 3px;">🍽️ ${tableLabel.toUpperCase()}</div>` : ''}
-            <div style="font-size: 11px; font-family: monospace;">Data: ${order.date} | Horário: ${order.time}</div>
+            <div style="font-size: 22px; font-weight: 900; margin: 4px 0;">PEDIDO #${order.id}</div>
+            ${isTableOrder ? `<div style="font-size: 17px; font-weight: 900; background: #000; color: #fff; padding: 4px; margin: 4px 0; border-radius: 3px;">🍽️ ${tableLabel.toUpperCase()}</div>` : ''}
+            <div style="font-size: 11.5px; font-family: monospace;">Data: ${order.date} | Horário: ${order.time}</div>
         </div>
         
-        <div style="margin-bottom: 12px; font-size: 13px; line-height: 1.4;">
+        <div style="margin-bottom: 10px; font-size: 13px; line-height: 1.4;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="font-weight: bold;">IDENTIFICAÇÃO:</span>
                 <span style="font-weight: bold; font-size: 14px;">${order.clientName.toUpperCase()}</span>
@@ -2616,7 +2761,7 @@ function printKitchenTicket(id) {
         <div class="ticket-separator" style="border-top: 2px dashed #000; margin: 10px 0;"></div>
         
         <div>
-            <div class="ticket-section-title" style="font-weight: bold; font-size: 12px; margin-bottom: 10px;">Itens da Cozinha</div>
+            <div class="ticket-section-title" style="font-weight: 900; font-size: 13px; margin-bottom: 8px;">Itens da Cozinha</div>
             <div style="margin-top: 4px;">
                 ${itemsHTML}
             </div>
@@ -2624,13 +2769,12 @@ function printKitchenTicket(id) {
         
         <div class="ticket-separator" style="border-top: 2px dashed #000; margin: 10px 0;"></div>
         
-        <div class="ticket-footer" style="text-align: center; font-size: 13px; font-weight: bold; margin-top: 15px; border: 1px solid #000; padding: 4px; letter-spacing: 2px;">
+        <div class="ticket-footer" style="text-align: center; font-size: 13px; font-weight: bold; margin-top: 12px; border: 1px solid #000; padding: 5px; letter-spacing: 1px;">
             VIA DA COZINHA ${isTableOrder ? '• MESA' : ''}
         </div>
     `;
     
-    // Launch print
-    window.print();
+    openThermalPrintWindow(ticketHTML, `Cozinha - Pedido #${order.id}`);
 }
 
 /* ==========================================================================

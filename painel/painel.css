@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Roloff Lanches - Painel Administrativo & Cozinha (Kitchen & Admin Dashboard)
    Identidade Visual: BordÃ´ (#74112B) + Dourado (#DCA744) + Branco (#FFFFFF / #FAF8F5)
    ========================================================================== */
@@ -1163,8 +1163,12 @@ input:checked + .slider:before {
 }
 
 /* ==========================================================================
-   9. IMPRESSÃƒO TÃ‰RMICA (PRINT ONLY)
+   9. IMPRESSÃO TÉRMICA (PRINT ONLY)
    ========================================================================== */
+.print-only {
+    display: none !important;
+}
+
 @media print {
     body * {
         visibility: hidden;
@@ -1173,13 +1177,14 @@ input:checked + .slider:before {
         visibility: visible;
     }
     #printSection {
+        display: block !important;
         position: absolute;
         left: 0;
         top: 0;
         width: 80mm;
         padding: 4mm;
         font-family: 'Courier New', Courier, monospace;
-        font-size: 12px;
+        font-size: 13px;
         color: #000;
         background: #fff;
     }
