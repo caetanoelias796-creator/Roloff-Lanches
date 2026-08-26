@@ -2,7 +2,8 @@
 /* ==========================================================================
    Date & Period Filter Helpers & Global State
    ========================================================================== */
-let currentPeriodFilter = 'todos'; // 'todos', 'hoje', 'ontem', 'semana', 'mes', 'custom'
+let currentPeriodFilter = 'todos'; // 'todos', 'hoje', 'ontem', 'semana', 'mes', 'mes_especifico', 'custom'
+let specificMonthValue = null; // 'YYYY-MM'
 let customFilterStartDate = null;
 let customFilterEndDate = null;
 
@@ -21,17 +22,37 @@ function getOrderTimestamp(order) {
     if (order.timestamp && !isNaN(Number(order.timestamp))) {
         return Number(order.timestamp);
     }
-    if (order.id && !isNaN(Number(order.id)) && Number(order.id) > 1500000000000) {
-        return Number(order.id);
+    if (order.createdAt && !isNaN(Number(order.createdAt))) {
+        return Number(order.createdAt);
+    }
+    if (order.id && !isNaN(Number(order.id))) {
+        const numId = Number(order.id);
+        if (numId > 1500000000000) {
+            return numId;
+        }
     }
     if (order.date) {
         const parts = String(order.date).split(/[\/\-]/);
         if (parts.length === 3) {
+            let day, month, year;
             if (parts[0].length === 4) {
-                return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])).getTime();
+                year = Number(parts[0]);
+                month = Number(parts[1]) - 1;
+                day = Number(parts[2]);
             } else {
-                return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0])).getTime();
+                day = Number(parts[0]);
+                month = Number(parts[1]) - 1;
+                year = Number(parts[2]);
             }
+            let hours = 0, minutes = 0;
+            if (order.time) {
+                const timeParts = String(order.time).match(/(\d+):(\d+)/);
+                if (timeParts) {
+                    hours = Number(timeParts[1]);
+                    minutes = Number(timeParts[2]);
+                }
+            }
+            return new Date(year, month, day, hours, minutes).getTime();
         }
     }
     return 0;
@@ -40,7 +61,7 @@ function getOrderTimestamp(order) {
 function matchesOrderDatePeriod(order) {
     if (currentPeriodFilter === 'todos') return true;
     const ts = getOrderTimestamp(order);
-    if (!ts) return true; // Se nÃ£o tiver timestamp identificÃ¡vel, inclui para nÃ£o ocultar
+    if (!ts) return true;
 
     const orderDate = new Date(ts);
     const now = new Date();
@@ -70,6 +91,12 @@ function matchesOrderDatePeriod(order) {
                orderDate.getMonth() === now.getMonth();
     }
 
+    if (currentPeriodFilter === 'mes_especifico' && specificMonthValue) {
+        const [targetYear, targetMonth] = specificMonthValue.split('-').map(Number);
+        return orderDate.getFullYear() === targetYear &&
+               (orderDate.getMonth() + 1) === targetMonth;
+    }
+
     if (currentPeriodFilter === 'custom') {
         if (customFilterStartDate && orderDate < customFilterStartDate) return false;
         if (customFilterEndDate && orderDate > customFilterEndDate) return false;
@@ -89,8 +116,82 @@ function matchesOrderStatusFilter(order) {
     return order.status === filterStatus;
 }
 
+function populateSpecificMonthSelect() {
+    const select = document.getElementById('specificMonthSelect');
+    if (!select) return;
+
+    const monthNames = [
+        'Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+
+    select.innerHTML = '<option value="">ðŸ“… MÃªs EspecÃ­fico...</option>';
+
+    const availableMonths = new Set();
+    const now = new Date();
+
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        availableMonths.add(val);
+    }
+
+    (orders || []).forEach(o => {
+        const ts = getOrderTimestamp(o);
+        if (ts) {
+            const d = new Date(ts);
+            const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            availableMonths.add(val);
+        }
+    });
+
+    const sortedMonths = Array.from(availableMonths).sort().reverse();
+    sortedMonths.forEach(mStr => {
+        const [year, monthNum] = mStr.split('-').map(Number);
+        const label = `${monthNames[monthNum - 1]} de ${year}`;
+        const opt = document.createElement('option');
+        opt.value = mStr;
+        opt.innerText = label;
+        if (currentPeriodFilter === 'mes_especifico' && specificMonthValue === mStr) {
+            opt.selected = true;
+        }
+        select.appendChild(opt);
+    });
+}
+
+function setSpecificMonthFilter(val) {
+    if (!val) {
+        setPeriodFilter('todos');
+        return;
+    }
+    currentPeriodFilter = 'mes_especifico';
+    specificMonthValue = val;
+
+    document.querySelectorAll('.btn-period-filter').forEach(btn => btn.classList.remove('active'));
+
+    const customRow = document.getElementById('customDateRangeRow');
+    if (customRow) customRow.classList.add('display-none');
+
+    const badge = document.getElementById('activeFilterBadge');
+    if (badge) {
+        const [year, mNum] = val.split('-').map(Number);
+        const monthNames = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        badge.innerText = `MÃªs selecionado: ${monthNames[mNum - 1]} / ${year}`;
+    }
+
+    updateIndicators();
+    renderOrdersList();
+        populateSpecificMonthSelect();
+}
+
 function setPeriodFilter(period) {
     currentPeriodFilter = period;
+    specificMonthValue = null;
+
+    const monthSelect = document.getElementById('specificMonthSelect');
+    if (monthSelect && period !== 'mes_especifico') {
+        monthSelect.value = '';
+    }
 
     const periodButtons = {
         'todos': document.getElementById('btnPeriodTodos'),
@@ -121,6 +222,7 @@ function setPeriodFilter(period) {
 
     updateIndicators();
     renderOrdersList();
+        populateSpecificMonthSelect();
 }
 
 function toggleCustomDateFilter() {
@@ -166,6 +268,10 @@ function applyCustomDateFilter() {
     }
 
     currentPeriodFilter = 'custom';
+    specificMonthValue = null;
+
+    const monthSelect = document.getElementById('specificMonthSelect');
+    if (monthSelect) monthSelect.value = '';
 
     document.querySelectorAll('.btn-period-filter').forEach(btn => btn.classList.remove('active'));
     const btnCustom = document.getElementById('btnPeriodCustom');
@@ -179,6 +285,7 @@ function applyCustomDateFilter() {
 
     updateIndicators();
     renderOrdersList();
+        populateSpecificMonthSelect();
     showToast('Filtro de perÃ­odo personalizado aplicado!', 'success');
 }
 
@@ -641,6 +748,7 @@ function setupFirebaseRealtime() {
         
         updateIndicators();
         renderOrdersList();
+        populateSpecificMonthSelect();
         if (currentSection === 'tables') {
             renderTablesDashboard();
         }
@@ -689,6 +797,7 @@ function fetchOrders(isFirstLoad = false) {
             
             updateIndicators();
             renderOrdersList();
+        populateSpecificMonthSelect();
             if (currentSection === 'tables') {
                 renderTablesDashboard();
             }
@@ -815,6 +924,7 @@ function setFilter(status) {
     }
     
     renderOrdersList();
+        populateSpecificMonthSelect();
 }
 
 function renderOrdersList() {
@@ -971,13 +1081,21 @@ function renderOrdersList() {
         }
     });
 
-        // Combina filtros de Data/PerÃ­odo e Status
+            // Combina filtros de Data/PerÃ­odo e Status
     const filtered = displayList.filter(order => {
         return matchesOrderDatePeriod(order) && matchesOrderStatusFilter(order);
     });
 
-    // OrdenaÃ§Ã£o PrioritÃ¡ria: Pendentes Primeiro -> Em Preparo -> Para Entrega -> ConcluÃ­dos -> Cancelados
-    // Dentro de cada status, pedidos mais recentes primeiro (timestamp decrescente)
+    // OrdenaÃ§Ã£o:
+    // 1. Pedidos Pendentes ficam no topo absoluto (prio 1)
+    // 2. Pedidos em Preparo (prio 2)
+    // 3. Pedidos para Entrega / Prontos (prio 3)
+    // 4. Pedidos ConcluÃ­dos / Finalizados (prio 4)
+    // 5. Pedidos Cancelados (prio 5)
+    //
+    // Regra CronolÃ³gica:
+    // - Para pedidos PENDENTES e EM PRODUÃ‡ÃƒO (prio 1 a 3): MAIS ANTIGO PRIMEIRO (FIFO / fila da cozinha). Novos pedidos entram no final da fila de pendentes.
+    // - Para pedidos CONCLUÃDOS e CANCELADOS (prio 4 e 5): MAIS RECENTES PRIMEIRO (histÃ³rico).
     filtered.sort((a, b) => {
         const prioA = getStatusPriority(a.status);
         const prioB = getStatusPriority(b.status);
@@ -986,7 +1104,14 @@ function renderOrdersList() {
         }
         const timeA = getOrderTimestamp(a);
         const timeB = getOrderTimestamp(b);
-        return timeB - timeA;
+
+        if (prioA <= 3) {
+            // Fila de atendimento/cozinha: Mais antigo primeiro (ordem de chegada / FIFO)
+            return timeA - timeB;
+        } else {
+            // HistÃ³rico finalizado/cancelado: Mais recente primeiro
+            return timeB - timeA;
+        }
     });
     
     if (filtered.length === 0) {
@@ -1289,7 +1414,7 @@ function renderOrdersList() {
                         <span class="material-symbols-rounded">print</span>
                     </button>
                     <button class="btn-print btn-print-kitchen" onclick="printKitchenTicket(${order.id})" title="Imprimir Via Cozinha">
-                        <span class="material-symbols-rounded">local_pizza</span>
+                        <span class="material-symbols-rounded">lunch_dining</span>
                     </button>
                     ${closeComandaBtnHTML}
                     ${actionButtonHTML}
@@ -1555,7 +1680,7 @@ function sendToMotoboy(orderId) {
         itemsText = 'Não especificado';
     }
 
-    const msg = `🛵 PIZZARIA DRILL
+    const msg = `🛵 ROLOFF LANCHES DRILL
 
 📦 NOVA ENTREGA
 
@@ -2014,6 +2139,7 @@ function finalizeTableComanda(targetIdOrTableNum) {
             showToast(`${clientName} encerrada (${paymentLabel}) com sucesso!`, 'success');
             renderTablesDashboard();
             renderOrdersList();
+        populateSpecificMonthSelect();
         })
         .catch(err => {
             console.error("Erro ao encerrar comanda no Firebase:", err);
@@ -2035,6 +2161,7 @@ function finalizeTableComanda(targetIdOrTableNum) {
             showToast(`${clientName} encerrada (${paymentLabel}) com sucesso!`, 'success');
             renderTablesDashboard();
             renderOrdersList();
+        populateSpecificMonthSelect();
         })
         .catch(err => {
             console.error("Erro ao encerrar comanda:", err);
@@ -2220,6 +2347,7 @@ function saveOrderPickupTime(orderId, customVal = null) {
     }
     
     renderOrdersList();
+        populateSpecificMonthSelect();
 }
 
 function editOrderPickupTime(orderId) {
@@ -2284,6 +2412,7 @@ function clearAllOrders() {
             knownOrderIds.clear();
             updateIndicators();
             renderOrdersList();
+        populateSpecificMonthSelect();
             triggerCentralAutoBackup();
         })
         .catch(err => {
@@ -2309,6 +2438,7 @@ function clearAllOrders() {
                 knownOrderIds.clear();
                 updateIndicators();
                 renderOrdersList();
+        populateSpecificMonthSelect();
                 triggerCentralAutoBackup();
             })
             .catch(fallbackErr => {
@@ -2334,6 +2464,7 @@ function clearAllOrders() {
             knownOrderIds.clear();
             updateIndicators();
             renderOrdersList();
+        populateSpecificMonthSelect();
             triggerCentralAutoBackup();
         })
         .catch(err => {
@@ -2606,7 +2737,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "cachorro_big",
                                            "name":  "Cachorro Big",
                                            "description":  "Molho de carne moída, 1 salsicha, vinagrete, milho, ervilha, catchup, maionese, mostarda e batata palha.",
-                                           "image":  "assets/hotdog.jpg",
+                                           "image":  "../assets/hotdog.jpg",
                                            "category":  "lanches",
                                            "price":  18.0,
                                            "badge":  "Top",
@@ -2621,7 +2752,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "cachorro_calabresa",
                                            "name":  "Cachorro Quente Calabresa",
                                            "description":  "Maionese, 120g de calabresa, milho e batata palha.",
-                                           "image":  "assets/hotdog_calabresa.jpg",
+                                           "image":  "../assets/hotdog_calabresa.jpg",
                                            "category":  "lanches",
                                            "price":  16.0,
                                            "available":  true
@@ -2630,7 +2761,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "cachorro_simples",
                                            "name":  "Cachorro Quente Simples",
                                            "description":  "Molho, 1 salsicha, maionese, milho, ervilha e batata palha.",
-                                           "image":  "assets/hotdog.jpg",
+                                           "image":  "../assets/hotdog.jpg",
                                            "category":  "lanches",
                                            "price":  14.0,
                                            "available":  true
@@ -2639,7 +2770,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "cachorro_duplo",
                                            "name":  "Cachorro Quente Duplo",
                                            "description":  "Molho, 2 salsichas, maionese, milho, ervilha e batata palha.",
-                                           "image":  "assets/hotdog.jpg",
+                                           "image":  "../assets/hotdog.jpg",
                                            "category":  "lanches",
                                            "price":  16.0,
                                            "available":  true
@@ -2648,7 +2779,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "pastel_carne",
                                            "name":  "Pastel de Carne",
                                            "description":  "120g de carne bovina moída temperada, sequinho e crocante.",
-                                           "image":  "assets/pastel.jpg",
+                                           "image":  "../assets/pastel.jpg",
                                            "category":  "lanches",
                                            "price":  17.0,
                                            "available":  true
@@ -2657,7 +2788,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "pastel_queijo",
                                            "name":  "Pastel de Queijo",
                                            "description":  "120g de queijo mussarela derretido.",
-                                           "image":  "assets/pastel.jpg",
+                                           "image":  "../assets/pastel.jpg",
                                            "category":  "lanches",
                                            "price":  16.0,
                                            "available":  true
@@ -2666,7 +2797,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "pastel_frango_catupiry",
                                            "name":  "Pastel de Frango com Catupiry",
                                            "description":  "120g de frango desfiado suculento com Catupiry original.",
-                                           "image":  "assets/pastel.jpg",
+                                           "image":  "../assets/pastel.jpg",
                                            "category":  "lanches",
                                            "price":  16.0,
                                            "available":  true
@@ -2675,7 +2806,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "pastel_carioca",
                                            "name":  "Pastel Carioca",
                                            "description":  "120g de frango, queijo mussarela, presunto e orégano.",
-                                           "image":  "assets/pastel.jpg",
+                                           "image":  "../assets/pastel.jpg",
                                            "category":  "lanches",
                                            "price":  19.0,
                                            "badge":  "Especial",
@@ -2685,7 +2816,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "pastel_calabresa_queijo",
                                            "name":  "Pastel de Calabresa com Queijo",
                                            "description":  "120g de calabresa fatiada com queijo mussarela.",
-                                           "image":  "assets/pastel.jpg",
+                                           "image":  "../assets/pastel.jpg",
                                            "category":  "lanches",
                                            "price":  16.0,
                                            "available":  true
@@ -2694,7 +2825,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "misto_quente",
                                            "name":  "Misto Quente",
                                            "description":  "Pão fatiado tostado na chapa, maionese, queijo, presunto e orégano.",
-                                           "image":  "assets/torrada.jpg",
+                                           "image":  "../assets/torrada.jpg",
                                            "category":  "lanches",
                                            "price":  13.0,
                                            "available":  true
@@ -2703,7 +2834,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "torrada_pao_fatiado",
                                            "name":  "Torrada Pão Fatiado",
                                            "description":  "Pão fatiado tostado, maionese, queijo, presunto, alface e tomate.",
-                                           "image":  "assets/torrada.jpg",
+                                           "image":  "../assets/torrada.jpg",
                                            "category":  "lanches",
                                            "price":  11.0,
                                            "available":  true
@@ -2712,7 +2843,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "torrada_pao_xis",
                                            "name":  "Torrada Pão de Xis",
                                            "description":  "Pão de xis prensado, maionese, queijo, presunto, alface, tomate e ovo.",
-                                           "image":  "assets/torrada.jpg",
+                                           "image":  "../assets/torrada.jpg",
                                            "category":  "lanches",
                                            "price":  13.0,
                                            "available":  true
@@ -2721,7 +2852,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_bacon",
                                            "name":  "X-Bacon",
                                            "description":  "140g de hambúrguer + 80g de bacon, maionese, milho, ervilha, alface, tomate, queijo, presunto e ovo.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  31.0,
                                            "badge":  "Favorito",
@@ -2731,7 +2862,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_bagunca",
                                            "name":  "X-Bagunça",
                                            "description":  "115g (frango, bacon, carne e calabresa), maionese, milho, ervilha, alface, tomate, queijo, presunto e ovo.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  29.0,
                                            "badge":  "Completo",
@@ -2741,7 +2872,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_calabresa",
                                            "name":  "X-Calabresa",
                                            "description":  "115g de calabresa, maionese, milho, ervilha, alface, tomate, queijo, presunto e ovo.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  25.0,
                                            "available":  true
@@ -2750,7 +2881,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_carne",
                                            "name":  "X-Carne",
                                            "description":  "115g de iscas de carne, maionese, milho, ervilha, alface, tomate, queijo, presunto e ovo.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  29.0,
                                            "available":  true
@@ -2759,7 +2890,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_casa",
                                            "name":  "X-Casa",
                                            "description":  "140g de hambúrguer, maionese, milho, ervilha, alface, tomate, queijo, presunto, ovo e batata-frita.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  28.0,
                                            "badge":  "Especialidade",
@@ -2769,7 +2900,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_coracao_especial",
                                            "name":  "X-Coração Especial",
                                            "description":  "140g de hambúrguer + 115g de coração, maionese, milho, ervilha, alface, tomate, queijo, presunto e ovo.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  35.0,
                                            "badge":  "Super",
@@ -2779,7 +2910,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_coracao_simples",
                                            "name":  "X-Coração",
                                            "description":  "115g de coração, maionese, milho, ervilha, alface, tomate, queijo, presunto e ovo.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  29.0,
                                            "available":  true
@@ -2788,7 +2919,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_costela",
                                            "name":  "X-Costela",
                                            "description":  "115g de costela, maionese, milho, ervilha, alface, tomate, queijo, presunto e ovo.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  35.0,
                                            "badge":  "Premium",
@@ -2798,7 +2929,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_file_acebolado",
                                            "name":  "X-Filé Acebolado",
                                            "description":  "115g de filé, maionese, milho, ervilha, alface, tomate, queijo, presunto, ovo, cebola e batata-frita.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  35.0,
                                            "badge":  "Premium",
@@ -2808,7 +2939,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_frango",
                                            "name":  "X-Frango",
                                            "description":  "115g de frango, maionese, milho, ervilha, alface, tomate, queijo, presunto e ovo.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  21.0,
                                            "available":  true
@@ -2817,7 +2948,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_frango_acebolado",
                                            "name":  "X-Frango Acebolado",
                                            "description":  "115g frango + cebola, maionese, milho, ervilha, alface, tomate, queijo, presunto e ovo.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  23.0,
                                            "available":  true
@@ -2826,7 +2957,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_salada",
                                            "name":  "X-Salada",
                                            "description":  "Hambúrguer 140g, maionese, milho, ervilha, alface, tomate, queijo, presunto e ovo.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  25.0,
                                            "badge":  "Clássico",
@@ -2836,7 +2967,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "x_strogonoff",
                                            "name":  "X-Strogonoff",
                                            "description":  "115g de iscas de carne, molho de strogonoff, maionese, milho, ervilha, alface, tomate, queijo, presunto e ovo.",
-                                           "image":  "assets/xis.jpg",
+                                           "image":  "../assets/xis.jpg",
                                            "category":  "lanches",
                                            "price":  30.0,
                                            "badge":  "Destaque",
@@ -2848,7 +2979,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "batata_frita_g",
                                            "name":  "Batata Frita G (800g)",
                                            "description":  "Porção grande de 800g de batatas fritas crocantes e sequinhas.",
-                                           "image":  "assets/porcoes_hero.jpg",
+                                           "image":  "../assets/porcoes_hero.jpg",
                                            "category":  "porcoes",
                                            "price":  30.0,
                                            "available":  true
@@ -2857,7 +2988,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "batata_frita_p",
                                            "name":  "Batata Frita P (500g)",
                                            "description":  "Porção de 500g de batatas fritas crocantes e sequinhas.",
-                                           "image":  "assets/porcoes_hero.jpg",
+                                           "image":  "../assets/porcoes_hero.jpg",
                                            "category":  "porcoes",
                                            "price":  23.0,
                                            "available":  true
@@ -2866,7 +2997,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "polenta_frita",
                                            "name":  "Polenta Frita (600g)",
                                            "description":  "Porção de 600g de polenta frita dourada e crocante.",
-                                           "image":  "assets/porcoes_hero.jpg",
+                                           "image":  "../assets/porcoes_hero.jpg",
                                            "category":  "porcoes",
                                            "price":  18.0,
                                            "available":  true
@@ -2875,7 +3006,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "polenta_frita_queijo",
                                            "name":  "Polenta Frita c/ Queijo (600g)",
                                            "description":  "Porção de 600g de polenta frita coberta com queijo derretido.",
-                                           "image":  "assets/porcoes_hero.jpg",
+                                           "image":  "../assets/porcoes_hero.jpg",
                                            "category":  "porcoes",
                                            "price":  25.0,
                                            "available":  true
@@ -2884,7 +3015,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "batata_bacon_800",
                                            "name":  "Batata com Bacon G (800g + 120g bacon)",
                                            "description":  "800g de batata frita com 120g de bacon crocante por cima.",
-                                           "image":  "assets/porcoes_hero.jpg",
+                                           "image":  "../assets/porcoes_hero.jpg",
                                            "category":  "porcoes",
                                            "price":  42.0,
                                            "badge":  "Mais Pedida",
@@ -2894,7 +3025,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "batata_bacon_500",
                                            "name":  "Batata com Bacon P (500g + 80g bacon)",
                                            "description":  "500g de batata frita com 80g de bacon crocante por cima.",
-                                           "image":  "assets/porcoes_hero.jpg",
+                                           "image":  "../assets/porcoes_hero.jpg",
                                            "category":  "porcoes",
                                            "price":  32.0,
                                            "available":  true
@@ -2903,7 +3034,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "torre_batata_p",
                                            "name":  "Torre de Batata P",
                                            "description":  "800g Batata, 60g carne bovina, 60g calabresa, 120g carne suína, 120g frango, 80g bacon, Molho 4 queijos + queijo.",
-                                           "image":  "assets/torre_de_batata.jpg",
+                                           "image":  "../assets/torre_de_batata.jpg",
                                            "category":  "porcoes",
                                            "price":  62.0,
                                            "badge":  "Especial",
@@ -2913,7 +3044,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "torre_batata_g",
                                            "name":  "Torre de Batata G",
                                            "description":  "1.300 kg Batata, 120g carne suína, 120g frango, 120g carne bovina, 120g calabresa, 80g bacon, Molho 4 queijos + queijo.",
-                                           "image":  "assets/torre_de_batata.jpg",
+                                           "image":  "../assets/torre_de_batata.jpg",
                                            "category":  "porcoes",
                                            "price":  82.0,
                                            "badge":  "Super",
@@ -2923,7 +3054,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "torre_batata_gg",
                                            "name":  "Torre de Batata GG",
                                            "description":  "1.600 kg Batata, 120g carne suína, 120g frango, 120g carne bovina, 120g calabresa, 120g coração, 80g bacon, Molho 4 queijos + queijo + orégano.",
-                                           "image":  "assets/torre_de_batata.jpg",
+                                           "image":  "../assets/torre_de_batata.jpg",
                                            "category":  "porcoes",
                                            "price":  105.0,
                                            "badge":  "Gigante",
@@ -2933,7 +3064,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "picadao",
                                            "name":  "Picadão Roloff",
                                            "description":  "120g carne bovina, 120g frango, 120g suína, 120g calabresa, ovo de codorna, batata frita, polenta frita, queijo, pepino e azeitona.",
-                                           "image":  "assets/picadao.jpg",
+                                           "image":  "../assets/picadao.jpg",
                                            "category":  "porcoes",
                                            "price":  62.0,
                                            "badge":  "Completo",
@@ -2943,7 +3074,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "aneis_cebola",
                                            "name":  "Porção Anéis de Cebola (380g)",
                                            "description":  "380g de anéis de cebola empanados e super crocantes.",
-                                           "image":  "assets/porcoes_hero.jpg",
+                                           "image":  "../assets/porcoes_hero.jpg",
                                            "category":  "porcoes",
                                            "price":  22.0,
                                            "available":  true
@@ -2952,7 +3083,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "porcao_viola",
                                            "name":  "Porção Viola",
                                            "description":  "500g de viola, 400g de polenta frita e 300g de pepino em conserva.",
-                                           "image":  "assets/porcoes_hero.jpg",
+                                           "image":  "../assets/porcoes_hero.jpg",
                                            "category":  "porcoes",
                                            "price":  60.0,
                                            "available":  true
@@ -2961,7 +3092,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "coxinha_asa",
                                            "name":  "Porção Coxinha da Asa (6 peças)",
                                            "description":  "6 peças de coxinhas da asa crocantes e bem temperadas.",
-                                           "image":  "assets/porcoes_hero.jpg",
+                                           "image":  "../assets/porcoes_hero.jpg",
                                            "category":  "porcoes",
                                            "price":  28.0,
                                            "available":  true
@@ -2972,7 +3103,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "chopp_300",
                                            "name":  "Chopp 300ml",
                                            "description":  "Chopp claro geladinho na caneca 300ml.",
-                                           "image":  "assets/bebidas/chopp_300.jpg",
+                                           "image":  "../assets/bebidas/chopp_300.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -2981,7 +3112,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "chopp_500",
                                            "name":  "Chopp 500ml",
                                            "description":  "Chopp claro geladinho na caneca 500ml.",
-                                           "image":  "assets/bebidas/chopp_500.jpg",
+                                           "image":  "../assets/bebidas/chopp_500.jpg",
                                            "category":  "bebidas",
                                            "price":  12.0,
                                            "available":  true
@@ -2990,7 +3121,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "suco_uva_300",
                                            "name":  "Suco de Uva 300ml",
                                            "description":  "Suco de uva integral no copo 300ml.",
-                                           "image":  "assets/bebidas/suco_uva_300.jpg",
+                                           "image":  "../assets/bebidas/suco_uva_300.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -2999,7 +3130,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "suco_uva_garrafa_500",
                                            "name":  "Suco de Uva Garrafa 500ml",
                                            "description":  "Garrafa de 500ml de suco de uva integral natural.",
-                                           "image":  "assets/bebidas/suco_uva_garrafa_500.jpg",
+                                           "image":  "../assets/bebidas/suco_uva_garrafa_500.jpg",
                                            "category":  "bebidas",
                                            "price":  16.0,
                                            "available":  true
@@ -3008,7 +3139,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "coca_zero_350",
                                            "name":  "Coca-Cola Zero Lata 350ml",
                                            "description":  "Refrigerante Coca-Cola sem açúcar lata 350ml.",
-                                           "image":  "assets/bebidas/coca_zero_350.jpg",
+                                           "image":  "../assets/bebidas/coca_zero_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -3017,7 +3148,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "coca_350",
                                            "name":  "Coca-Cola Lata 350ml",
                                            "description":  "Refrigerante Coca-Cola tradicional lata 350ml.",
-                                           "image":  "assets/bebidas/coca_350.jpg",
+                                           "image":  "../assets/bebidas/coca_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -3026,7 +3157,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "tonica_350",
                                            "name":  "Água Tônica 350ml",
                                            "description":  "Refrigerante água tônica lata 350ml.",
-                                           "image":  "assets/bebidas/tonica_350.jpg",
+                                           "image":  "../assets/bebidas/tonica_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -3035,7 +3166,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "fanta_laranja_350",
                                            "name":  "Fanta Laranja Lata 350ml",
                                            "description":  "Refrigerante Fanta Laranja lata 350ml.",
-                                           "image":  "assets/bebidas/fanta_laranja_350.jpg",
+                                           "image":  "../assets/bebidas/fanta_laranja_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -3044,7 +3175,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "fanta_uva_350",
                                            "name":  "Fanta Uva Lata 350ml",
                                            "description":  "Refrigerante Fanta Uva lata 350ml.",
-                                           "image":  "assets/bebidas/fanta_uva_350.jpg",
+                                           "image":  "../assets/bebidas/fanta_uva_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -3053,7 +3184,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "guarana_350",
                                            "name":  "Guaraná Antarctica Lata 350ml",
                                            "description":  "Refrigerante Guaraná Antarctica lata 350ml.",
-                                           "image":  "assets/bebidas/guarana_350.jpg",
+                                           "image":  "../assets/bebidas/guarana_350.jpg",
                                            "category":  "bebidas",
                                            "price":  6.0,
                                            "available":  true
@@ -3062,7 +3193,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "brahma_zero_350",
                                            "name":  "Cerveja Brahma Zero Lata 350ml",
                                            "description":  "Cerveja sem álcool Brahma lata 350ml.",
-                                           "image":  "assets/bebidas/brahma_zero_350.jpg",
+                                           "image":  "../assets/bebidas/brahma_zero_350.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -3071,7 +3202,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "brahma_latao_473",
                                            "name":  "Cerveja Brahma Latão 473ml",
                                            "description":  "Cerveja Brahma latão 473ml trincando de gelada.",
-                                           "image":  "assets/bebidas/brahma_latao_473.jpg",
+                                           "image":  "../assets/bebidas/brahma_latao_473.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -3080,7 +3211,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "polar_latao_473",
                                            "name":  "Cerveja Polar Latão 473ml",
                                            "description":  "Cerveja Polar latão 473ml gelada.",
-                                           "image":  "assets/bebidas/polar_latao_473.jpg",
+                                           "image":  "../assets/bebidas/polar_latao_473.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -3089,7 +3220,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "amstel_latao_473",
                                            "name":  "Cerveja Amstel Latão 473ml",
                                            "description":  "Cerveja puro malte Amstel latão 473ml.",
-                                           "image":  "assets/bebidas/amstel_latao_473.jpg",
+                                           "image":  "../assets/bebidas/amstel_latao_473.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -3098,7 +3229,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "heineken_latao_473",
                                            "name":  "Cerveja Heineken Latão 473ml",
                                            "description":  "Cerveja Heineken puro malte latão 473ml.",
-                                           "image":  "assets/bebidas/heineken_latao_473.jpg",
+                                           "image":  "../assets/bebidas/heineken_latao_473.jpg",
                                            "category":  "bebidas",
                                            "price":  10.0,
                                            "available":  true
@@ -3107,7 +3238,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "agua_sem_gas_500",
                                            "name":  "Água Mineral s/ Gás 500ml",
                                            "description":  "Garrafa de água mineral 500ml sem gás.",
-                                           "image":  "assets/bebidas/agua_sem_gas_500.jpg",
+                                           "image":  "../assets/bebidas/agua_sem_gas_500.jpg",
                                            "category":  "bebidas",
                                            "price":  4.0,
                                            "available":  true
@@ -3116,7 +3247,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "agua_com_gas_500",
                                            "name":  "Água Mineral c/ Gás 500ml",
                                            "description":  "Garrafa de água mineral 500ml com gás.",
-                                           "image":  "assets/bebidas/agua_com_gas_500.jpg",
+                                           "image":  "../assets/bebidas/agua_com_gas_500.jpg",
                                            "category":  "bebidas",
                                            "price":  4.0,
                                            "available":  true
@@ -3125,7 +3256,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "h2o_limao_500",
                                            "name":  "H2OH! Limão 500ml",
                                            "description":  "Bebida levemente gaseificada H2OH! sabor limão 500ml.",
-                                           "image":  "assets/bebidas/h2o_limao_500.jpg",
+                                           "image":  "../assets/bebidas/h2o_limao_500.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -3134,7 +3265,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "coca_600",
                                            "name":  "Coca-Cola 600ml",
                                            "description":  "Refrigerante Coca-Cola garrafa 600ml.",
-                                           "image":  "assets/bebidas/coca_600.jpg",
+                                           "image":  "../assets/bebidas/coca_600.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -3143,7 +3274,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "guarana_600",
                                            "name":  "Guaraná Antarctica 600ml",
                                            "description":  "Refrigerante Guaraná garrafa 600ml.",
-                                           "image":  "assets/bebidas/guarana_600.jpg",
+                                           "image":  "../assets/bebidas/guarana_600.jpg",
                                            "category":  "bebidas",
                                            "price":  8.0,
                                            "available":  true
@@ -3152,7 +3283,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "coca_1l",
                                            "name":  "Coca-Cola 1 Litro",
                                            "description":  "Refrigerante Coca-Cola garrafa 1L.",
-                                           "image":  "assets/bebidas/coca_1l.jpg",
+                                           "image":  "../assets/bebidas/coca_1l.jpg",
                                            "category":  "bebidas",
                                            "price":  10.0,
                                            "available":  true
@@ -3161,7 +3292,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "coca_2l",
                                            "name":  "Coca-Cola 2 Litros",
                                            "description":  "Refrigerante Coca-Cola garrafa 2L.",
-                                           "image":  "assets/bebidas/coca_2l.jpg",
+                                           "image":  "../assets/bebidas/coca_2l.jpg",
                                            "category":  "bebidas",
                                            "price":  15.0,
                                            "available":  true
@@ -3170,7 +3301,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "fanta_laranja_2l",
                                            "name":  "Fanta Laranja 2 Litros",
                                            "description":  "Refrigerante Fanta Laranja garrafa 2L.",
-                                           "image":  "assets/bebidas/fanta_laranja_2l.jpg",
+                                           "image":  "../assets/bebidas/fanta_laranja_2l.jpg",
                                            "category":  "bebidas",
                                            "price":  15.0,
                                            "available":  true
@@ -3179,7 +3310,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "fanta_uva_2l",
                                            "name":  "Fanta Uva 2 Litros",
                                            "description":  "Refrigerante Fanta Uva garrafa 2L.",
-                                           "image":  "assets/bebidas/fanta_uva_2l.jpg",
+                                           "image":  "../assets/bebidas/fanta_uva_2l.jpg",
                                            "category":  "bebidas",
                                            "price":  15.0,
                                            "available":  true
@@ -3188,7 +3319,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "guarana_2l",
                                            "name":  "Guaraná Antarctica 2 Litros",
                                            "description":  "Refrigerante Guaraná Antarctica garrafa 2L.",
-                                           "image":  "assets/bebidas/guarana_2l.jpg",
+                                           "image":  "../assets/bebidas/guarana_2l.jpg",
                                            "category":  "bebidas",
                                            "price":  15.0,
                                            "available":  true
@@ -3197,7 +3328,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "sprite_2l",
                                            "name":  "Sprite 2 Litros",
                                            "description":  "Refrigerante Sprite garrafa 2L.",
-                                           "image":  "assets/bebidas/sprite_2l.jpg",
+                                           "image":  "../assets/bebidas/sprite_2l.jpg",
                                            "category":  "bebidas",
                                            "price":  15.0,
                                            "available":  true
@@ -3206,7 +3337,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "caipira_pequena",
                                            "name":  "Caipira Pequena",
                                            "description":  "Caipirinha artesanal de frutas tamanho pequeno.",
-                                           "image":  "assets/bebidas/caipira_pequena.jpg",
+                                           "image":  "../assets/bebidas/caipira_pequena.jpg",
                                            "category":  "bebidas",
                                            "price":  14.0,
                                            "available":  true
@@ -3215,7 +3346,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "caipira_grande",
                                            "name":  "Caipira Grande",
                                            "description":  "Caipirinha artesanal de frutas tamanho grande.",
-                                           "image":  "assets/bebidas/caipira_grande.jpg",
+                                           "image":  "../assets/bebidas/caipira_grande.jpg",
                                            "category":  "bebidas",
                                            "price":  17.0,
                                            "available":  true
@@ -3224,7 +3355,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "torre_chopp_25l",
                                            "name":  "Torre de Chopp 2,5 Litros",
                                            "description":  "Torre de chopp com refil de gelo térmico 2,5L.",
-                                           "image":  "assets/bebidas/torre_chopp_25l.jpg",
+                                           "image":  "../assets/bebidas/torre_chopp_25l.jpg",
                                            "category":  "bebidas",
                                            "price":  55.0,
                                            "badge":  "Galera",
@@ -3234,7 +3365,7 @@ const DEFAULT_MENU_DATA = {
                                            "id":  "torre_chopp_35l",
                                            "name":  "Torre de Chopp 3,5 Litros",
                                            "description":  "Torre de chopp com refil de gelo térmico 3,5L.",
-                                           "image":  "assets/bebidas/torre_chopp_35l.jpg",
+                                           "image":  "../assets/bebidas/torre_chopp_35l.jpg",
                                            "category":  "bebidas",
                                            "price":  75.0,
                                            "badge":  "Top Galera",
@@ -3246,7 +3377,7 @@ const DEFAULT_MENU_DATA = {
                                               "id":  "sobremesa_dia",
                                               "name":  "Sobremesa do Dia",
                                               "description":  "Consulte as opções de doces e sobremesas especiais disponíveis hoje.",
-                                              "image":  "assets/gourmet_sobremesa.png",
+                                              "image":  "../assets/gourmet_sobremesa.png",
                                               "category":  "sobremesas",
                                               "price":  15.0,
                                               "available":  true
@@ -3589,7 +3720,7 @@ function renderProductsList() {
         card.innerHTML = `
             <div class="flavor-card-header">
                 <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
-                    <img src="${imgPath}" alt="${item.name}" style="width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover; border: 1px solid var(--border-color); background: #fff;" onerror="this.src='assets/hotdog.jpg'">
+                    <img src="${imgPath}" alt="${item.name}" style="width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover; border: 1px solid var(--border-color); background: #fff;" onerror="this.src='../assets/hotdog.jpg'">
                     <div class="flavor-card-info" style="flex: 1;">
                         <h4 style="margin: 0; color: var(--text-main); font-size: 15px; font-weight: 700;">${item.name}</h4>
                         <span class="category-tag salgada">
@@ -3960,18 +4091,20 @@ function deleteAdicional(key) {
 
 function getDefaultProductImageForCategory(catKey) {
     const defaults = {
-        'lanches': 'assets/hotdog.jpg',
-        'porcoes': 'assets/picadao.jpg',
-        'bebidas': 'assets/gourmet_bebida.png',
-        'sobremesas': 'assets/gourmet_sobremesa.png'
+        'lanches': '../assets/hotdog.jpg',
+        'porcoes': '../assets/picadao.jpg',
+        'bebidas': '../assets/gourmet_bebida.png',
+        'sobremesas': '../assets/gourmet_sobremesa.png'
     };
-    return defaults[catKey] || 'assets/hotdog.jpg';
+    return defaults[catKey] || '../assets/hotdog.jpg';
 }
 
 function resolveProductImage(item, categoryKey = 'lanches') {
     if (!item) return getDefaultProductImageForCategory(categoryKey);
-    if (item.image && typeof item.image === 'string' && item.image.trim() !== '') {
-        return item.image;
+    let img = item.image || item.imagem || '';
+    if (img && typeof img === 'string' && img.trim() !== '') {
+        if (img.startsWith('assets/')) return '../' + img;
+        return img;
     }
     const cat = categoryKey || item.category || 'lanches';
     return getDefaultProductImageForCategory(cat);
@@ -4008,23 +4141,23 @@ function populateProductImageSuggestions(category) {
     
     if (category === 'lanches') {
         suggestions = [
-            { label: 'Cachorro Big', value: 'assets/hotdog.jpg' },
-            { label: 'Cachorro Calabresa', value: 'assets/hotdog_calabresa.jpg' },
-            { label: 'Pastel Especial', value: 'assets/pastel.jpg' },
-            { label: 'Torrada / Misto', value: 'assets/torrada.jpg' },
-            { label: 'Xis Especial', value: 'assets/xis.jpg' }
+            { label: 'Cachorro Big', value: '../assets/hotdog.jpg' },
+            { label: 'Cachorro Calabresa', value: '../assets/hotdog_calabresa.jpg' },
+            { label: 'Pastel Especial', value: '../assets/pastel.jpg' },
+            { label: 'Torrada / Misto', value: '../assets/torrada.jpg' },
+            { label: 'Xis Especial', value: '../assets/xis.jpg' }
         ];
     } else if (category === 'porcoes') {
         suggestions = [
-            { label: 'PicadÃ£o Roloff', value: 'assets/picadao.jpg' }
+            { label: 'PicadÃ£o Roloff', value: '../assets/picadao.jpg' }
         ];
     } else if (category === 'bebidas') {
         suggestions = [
-            { label: 'Bebidas & Chopp', value: 'assets/gourmet_bebida.png' }
+            { label: 'Bebidas & Chopp', value: '../assets/gourmet_bebida.png' }
         ];
     } else if (category === 'sobremesas') {
         suggestions = [
-            { label: 'Sobremesa do Dia', value: 'assets/gourmet_sobremesa.png' }
+            { label: 'Sobremesa do Dia', value: '../assets/gourmet_sobremesa.png' }
         ];
     }
     
@@ -5505,7 +5638,7 @@ function exportSettingsBackup() {
         const downloadAnchor = document.createElement('a');
         const today = new Date().toISOString().slice(0, 10);
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `mundo-da-pizza-configuracoes-${today}.json`);
+        downloadAnchor.setAttribute("download", `roloff-lanches-configuracoes-${today}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
@@ -5526,7 +5659,7 @@ function exportOrdersBackup() {
         const downloadAnchor = document.createElement('a');
         const today = new Date().toISOString().slice(0, 10);
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `mundo-da-pizza-pedidos-${today}.json`);
+        downloadAnchor.setAttribute("download", `roloff-lanches-pedidos-${today}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
@@ -5546,17 +5679,20 @@ function validateMenuBackupData(data) {
         return { valid: false, error: 'O arquivo não contém a estrutura "menu_items".' };
     }
     
-    if (!Array.isArray(data.menu_items.pizzas) || data.menu_items.pizzas.length === 0) {
-        return { valid: false, error: 'Nenhum sabor de pizza válido encontrado no arquivo de backup.' };
+    const categories = Object.keys(data.menu_items);
+    if (categories.length === 0) {
+        return { valid: false, error: 'Nenhuma categoria de produtos encontrada no arquivo de backup.' };
     }
-    
-    if (!Array.isArray(data.menu_items.bebidas)) {
-        return { valid: false, error: 'A seção de bebidas do arquivo de backup está ausente ou malformatada.' };
+
+    let totalItems = 0;
+    for (const cat of categories) {
+        if (Array.isArray(data.menu_items[cat])) {
+            totalItems += data.menu_items[cat].length;
+        }
     }
-    
-    const invalidPizza = data.menu_items.pizzas.find(p => !p.name || !p.category);
-    if (invalidPizza) {
-        return { valid: false, error: 'Existem sabores de pizza com nome ou categoria ausentes no backup.' };
+
+    if (totalItems === 0) {
+        return { valid: false, error: 'Nenhum produto válido encontrado nas categorias do arquivo de backup.' };
     }
 
     return { valid: true, error: null };
@@ -5580,15 +5716,14 @@ function handleImportMenuBackup(event) {
                 return;
             }
             
-            const countPizzas = importedData.menu_items.pizzas.length;
-            const countBebidas = importedData.menu_items.bebidas.length;
+            const totalProducts = Object.keys(importedData.menu_items).reduce((acc, cat) => {
+                return acc + (Array.isArray(importedData.menu_items[cat]) ? importedData.menu_items[cat].length : 0);
+            }, 0);
             
             // 2. Explicit User Confirmation with Data Summary
             const userConfirmed = confirm(
                 `⚠️ CONFIRMAÇÃO DE RESTAURAÇÃO DE BACKUP:\n\n` +
-                `Foi encontrado no arquivo:\n` +
-                `• ${countPizzas} sabores de pizza\n` +
-                `• ${countBebidas} itens de bebidas\n\n` +
+                `Foram encontrados ${totalProducts} produtos cadastrados no backup.\n\n` +
                 `Deseja aplicar estas alterações ao cardápio da Roloff Lanches?`
             );
             
@@ -5937,5 +6072,79 @@ function deleteTableFromSystem(tableNum) {
         showToast(`Mesa #${normNum} excluÃ­da!`, 'success');
         renderTablesManagerList();
         renderTablesDashboard();
+    }
+}
+
+
+/* ==========================================================================
+   Quick Add Table Modal (+ Adicionar Mesa)
+   ========================================================================== */
+function openAddTableModal() {
+    const modal = document.getElementById('addTableModal');
+    if (modal) modal.style.display = 'flex';
+    const numInput = document.getElementById('quickTableNumInput');
+    if (numInput) {
+        numInput.value = '';
+        setTimeout(() => numInput.focus(), 100);
+    }
+    const nameInput = document.getElementById('quickTableNameInput');
+    if (nameInput) nameInput.value = '';
+}
+
+function closeAddTableModal() {
+    const modal = document.getElementById('addTableModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function handleQuickAddTableSubmit(e) {
+    if (e) e.preventDefault();
+    const numInput = document.getElementById('quickTableNumInput');
+    const nameInput = document.getElementById('quickTableNameInput');
+    if (!numInput) return;
+
+    const rawNum = numInput.value.trim();
+    if (!rawNum) {
+        showToast('Informe o nÃºmero ou identificaÃ§Ã£o da mesa.', 'warning');
+        return;
+    }
+
+    const normNum = getCanonicalTableNumber(rawNum);
+    const tableName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : `Mesa ${normNum}`;
+
+    const existingTables = getAllConfiguredTables();
+    if (existingTables.some(t => t.tableNum === normNum)) {
+        alert(`A Mesa #${normNum} jÃ¡ estÃ¡ cadastrada no sistema! Escolha outro nÃºmero ou identificaÃ§Ã£o.`);
+        return;
+    }
+
+    const payload = {
+        tableNum: normNum,
+        tableName: tableName,
+        status: 'livre',
+        active: true,
+        total: 0,
+        comandasCount: 0,
+        orderIds: []
+    };
+
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+        firebase.database().ref(`tables/${normNum}`).set(payload)
+            .then(() => {
+                firebaseTablesState[normNum] = payload;
+                showToast(`Mesa "${tableName}" (#${normNum}) cadastrada com sucesso no Firebase!`, 'success');
+                closeAddTableModal();
+                renderTablesDashboard();
+                renderTablesManagerList();
+            })
+            .catch(err => {
+                console.error("Erro ao cadastrar mesa no Firebase:", err);
+                showToast('Erro ao cadastrar mesa no Firebase: ' + (err.message || err), 'error');
+            });
+    } else {
+        firebaseTablesState[normNum] = payload;
+        showToast(`Mesa "${tableName}" (#${normNum}) cadastrada localmente!`, 'success');
+        closeAddTableModal();
+        renderTablesDashboard();
+        renderTablesManagerList();
     }
 }
