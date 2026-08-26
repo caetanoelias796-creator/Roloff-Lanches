@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -196,18 +196,17 @@
                 <div class="orders-filter-container" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-sm);">
                     <!-- Top Row: Quick Date Buttons & Status Select -->
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                        <!-- Quick Date Tabs -->
-                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                        <!-- Quick D                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                             <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-right: 4px; display: flex; align-items: center; gap: 4px;">
                                 <span class="material-symbols-rounded" style="font-size: 16px;">calendar_today</span>
-                                PerÃ­odo:
+                                Período:
                             </span>
                             <button type="button" class="btn-period-filter active" id="btnPeriodTodos" onclick="setPeriodFilter('todos')">Todos</button>
                             <button type="button" class="btn-period-filter" id="btnPeriodHoje" onclick="setPeriodFilter('hoje')">Hoje</button>
                             <button type="button" class="btn-period-filter" id="btnPeriodOntem" onclick="setPeriodFilter('ontem')">Ontem</button>
                             <button type="button" class="btn-period-filter" id="btnPeriodSemana" onclick="setPeriodFilter('semana')">Esta Semana</button>
-                            <button type="button" class="btn-period-filter" id="btnPeriodMes" onclick="setPeriodFilter('mes')">Este MÃªs</button>
-                            <button type="button" class="btn-period-filter" id="btnPeriodCustom" onclick="toggleCustomDateFilter()">Personalizado â–¾</button>
+                            <button type="button" class="btn-period-filter" id="btnPeriodMes" onclick="setPeriodFilter('mes')">Este Mês</button>
+                            <button type="button" class="btn-period-filter" id="btnPeriodCustom" onclick="toggleCustomDateFilter()">Personalizado ▾</button>
                         </div>
 
                         <!-- Status Filter Dropdown -->
@@ -218,12 +217,12 @@
                             </span>
                             <select id="orderStatusFilterSelect" onchange="onOrderStatusFilterChange(this.value)" style="padding: 7px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-main); font-size: 13px; font-weight: 600; cursor: pointer;">
                                 <option value="Todos">Todos os Status</option>
-                                <option value="Pendente">ðŸŸ¡ Pendentes</option>
-                                <option value="Preparando">ðŸ”µ Em Preparo</option>
-                                <option value="Entrega">ðŸŸ£ Para Entrega</option>
-                                <option value="Mesas">ðŸ½ï¸ Mesas / SalÃ£o Abertas</option>
-                                <option value="Entregue">ðŸŸ¢ ConcluÃ­dos / Finalizados</option>
-                                <option value="Cancelado">ðŸ”´ Cancelados</option>
+                                <option value="Pendente">🟡 Pendentes</option>
+                                <option value="Preparando">🔵 Em Preparo</option>
+                                <option value="Entrega">🟣 Para Entrega</option>
+                                <option value="Mesas">🍽️ Mesas / Salão Abertas</option>
+                                <option value="Entregue">🟢 Concluídos / Finalizados</option>
+                                <option value="Cancelado">🔴 Cancelados</option>
                             </select>
                         </div>
                     </div>
@@ -232,9 +231,9 @@
                     <div id="customDateRangeRow" class="display-none" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 10px; border-top: 1px dashed var(--border-color);">
                         <span style="font-size: 12px; color: var(--text-body); font-weight: 600;">De:</span>
                         <input type="date" id="customStartDate" style="padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-main); font-size: 12px;">
-                        <span style="font-size: 12px; color: var(--text-body); font-weight: 600;">AtÃ©:</span>
+                        <span style="font-size: 12px; color: var(--text-body); font-weight: 600;">Até:</span>
                         <input type="date" id="customEndDate" style="padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-main); font-size: 12px;">
-                        <button type="button" onclick="applyCustomDateFilter()" style="background: var(--primary); color: #fff; border: none; padding: 7px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer;">Filtrar PerÃ­odo</button>
+                        <button type="button" onclick="applyCustomDateFilter()" style="background: var(--primary); color: #fff; border: none; padding: 7px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer;">Filtrar Período</button>
                         <button type="button" onclick="clearCustomDateFilter()" style="background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); padding: 7px 12px; border-radius: var(--radius-sm); font-size: 12px; cursor: pointer;">Limpar</button>
                         <span id="activeFilterBadge" style="font-size: 12px; color: var(--accent-gold-dark); font-weight: 700; margin-left: auto;"></span>
                     </div>
@@ -245,9 +244,10 @@
                         <button class="filter-tab" data-status="Pendente" onclick="setFilter('Pendente')">Pendentes</button>
                         <button class="filter-tab" data-status="Preparando" onclick="setFilter('Preparando')">Em Preparo</button>
                         <button class="filter-tab" data-status="Entrega" onclick="setFilter('Entrega')">Para Entrega</button>
-                        <button class="filter-tab" data-status="Mesas" onclick="setFilter('Mesas')" style="color: #ffb74d;">ðŸ½ï¸ Mesas / SalÃ£o</button>
-                        <button class="filter-tab" data-status="Entregue" onclick="setFilter('Entregue')">ConcluÃ­dos</button>
+                        <button class="filter-tab" data-status="Mesas" onclick="setFilter('Mesas')" style="color: #ffb74d;">🍽️ Mesas / Salão</button>
+                        <button class="filter-tab" data-status="Entregue" onclick="setFilter('Entregue')">Concluídos</button>
                         <button class="filter-tab" data-status="Cancelado" onclick="setFilter('Cancelado')">Cancelados</button>
+                    </div>etFilter('Cancelado')">Cancelados</button>
                     </div>
                 </div>
 
@@ -272,8 +272,8 @@
                 <!-- Header -->
                 <header class="content-header">
                     <div class="header-title">
-                        <h1>Gerenciador de CardÃ¡pio</h1>
-                        <p>Gerencie os produtos, lanches, porÃ§Ãµes, bebidas, sobremesas e adicionais do Roloff Lanches</p>
+                        <h1>Gerenciador de Cardápio</h1>
+                        <p>Gerencie os produtos, lanches, porções, bebidas, sobremesas e adicionais do Roloff Lanches</p>
                     </div>
                     <div class="header-actions">
                         <button type="button" class="btn-status-next" onclick="openAddProductModal()" style="display: inline-flex; align-items: center; gap: 8px; border-radius: var(--radius-sm); border: none; padding: 10px 18px; cursor: pointer; font-weight: 600;">
@@ -293,7 +293,7 @@
                 <!-- Tab content: Products Grid -->
                 <div id="menuTabProducts" class="menu-tab-content">
                     <div class="flavors-search-bar" style="margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
-                        <input type="text" id="searchMenuProduct" placeholder="Pesquisar produto pelo nome ou descriÃ§Ã£o..." oninput="filterProductsList()" style="flex: 1; min-width: 240px; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main);">
+                        <input type="text" id="searchMenuProduct" placeholder="Pesquisar produto pelo nome ou descrição..." oninput="filterProductsList()" style="flex: 1; min-width: 240px; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main);">
                         <button type="button" class="btn-status-next" onclick="openAddProductModal()" style="display: inline-flex; align-items: center; gap: 8px; border-radius: var(--radius-sm); border: none; padding: 10px 18px; cursor: pointer; font-weight: 600;">
                             <span class="material-symbols-rounded">add_circle</span>
                             Novo Produto
@@ -311,7 +311,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                             <div>
                                 <h3 style="margin: 0; color: var(--text-main); font-family: var(--font-display); font-size: 18px;">Adicionais e Opcionais</h3>
-                                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Adicionais disponÃ­veis para os clientes personalizarem seus pedidos (ex: Maionese, Ketchup, Queijo Extra, etc.)</p>
+                                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Adicionais disponíveis para os clientes personalizarem seus pedidos (ex: Maionese, Ketchup, Queijo Extra, etc.)</p>
                             </div>
                         </div>
 
@@ -322,7 +322,7 @@
                                         <th style="padding: 10px;">ID</th>
                                         <th style="padding: 10px;">Nome do Adicional</th>
                                         <th style="padding: 10px;">Valor (R$)</th>
-                                        <th style="padding: 10px; text-align: center;">AÃ§Ãµes</th>
+                                        <th style="padding: 10px; text-align: center;">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="adicionaisTableBody">
@@ -342,7 +342,7 @@
                                 <input type="text" id="newAdicionalName" placeholder="Ex: Fatias de Bacon Extra" style="padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-size: 13px;">
                             </div>
                             <div style="width: 90px; display: flex; flex-direction: column; gap: 4px;">
-                                <label for="newAdicionalPrice" style="font-size: 11px; color: var(--text-light); font-weight: 600;">PreÃ§o (R$)</label>
+                                <label for="newAdicionalPrice" style="font-size: 11px; color: var(--text-light); font-weight: 600;">Preço (R$)</label>
                                 <input type="number" step="0.50" id="newAdicionalPrice" placeholder="0.00" style="padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-size: 13px;">
                             </div>
                             <button type="button" class="btn-status-next" onclick="addAdicionalRow()" style="padding: 8px 14px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-size: 13px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px;">
@@ -352,17 +352,17 @@
 
                         <div style="display: flex; justify-content: flex-end;">
                             <button type="button" class="btn-status-next" onclick="saveAdicionais()" style="display: inline-flex; align-items: center; gap: 8px; border-radius: var(--radius-sm); border: none; padding: 10px 22px; cursor: pointer; font-weight: 600;">
-                                <span class="material-symbols-rounded">save</span> Salvar AlteraÃ§Ãµes de Adicionais
+                                <span class="material-symbols-rounded">save</span> Salvar Alterações de Adicionais
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tab content: Pop-up de PromoÃ§Ãµes -->
+                <!-- Tab content: Pop-up de Promoções -->
                 <div id="menuTabPromo" class="menu-tab-content display-none">
                     <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 24px; max-width: 600px;">
-                        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 18px; color: var(--text-main);">ConfiguraÃ§Ãµes do Pop-up Promocional</h3>
-                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">Configure se o pop-up de ofertas da semana serÃ¡ exibido aos clientes e qual link do Facebook ou imagem serÃ¡ incorporado.</p>
+                        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 18px; color: var(--text-main);">Configurações do Pop-up Promocional</h3>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">Configure se o pop-up de ofertas da semana será exibido aos clientes e qual link do Facebook ou imagem será incorporado.</p>
                         
                         <form id="promoConfigForm" onsubmit="savePromoConfig(event)">
                             <div class="form-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
@@ -376,12 +376,12 @@
                             <div class="form-group" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 24px;">
                                 <label for="promoFacebookUrl" style="font-size: 13px; font-weight: 500; color: var(--text-light);">Link da Publicidade / Imagem (Opcional)</label>
                                 <input type="url" id="promoFacebookUrl" placeholder="Ex: https://www.facebook.com/.../posts/..." style="padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 14px; width: 100%;">
-                                <span style="font-size: 11px; color: var(--text-muted);">Cole o link de uma publicaÃ§Ã£o ou imagem de promoÃ§Ã£o. Se deixado em branco, o pop-up exibirÃ¡ a lista padrÃ£o de promoÃ§Ãµes.</span>
+                                <span style="font-size: 11px; color: var(--text-muted);">Cole o link de uma publicação ou imagem de promoção. Se deixado em branco, o pop-up exibirá a lista padrão de promoções.</span>
                             </div>
                             
                             <button type="submit" class="btn-status-next" style="border: none; padding: 12px 24px; cursor: pointer; border-radius: var(--radius-sm); font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
                                 <span class="material-symbols-rounded">save</span>
-                                Salvar ConfiguraÃ§Ãµes
+                                Salvar Configurações
                             </button>
                         </form>
                     </div>
@@ -989,29 +989,29 @@
                 
                 <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
                     <label for="productName" style="font-size: 13px; font-weight: 600; color: var(--text-main);">Nome do Produto</label>
-                    <input type="text" id="productName" required placeholder="Ex: X-Bacon Especial, PicadÃ£o Roloff..." style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 14px;">
+                    <input type="text" id="productName" required placeholder="Ex: X-Bacon Especial, Picadão Roloff..." style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 14px;">
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
                     <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
                         <label for="productCategorySelect" style="font-size: 13px; font-weight: 600; color: var(--text-main);">Categoria</label>
                         <select id="productCategorySelect" required style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 13px; cursor: pointer;" onchange="populateProductImageSuggestions(this.value)">
-                            <option value="lanches">Lanches & PastÃ©is</option>
-                            <option value="porcoes">PorÃ§Ãµes & Petiscos</option>
+                            <option value="lanches">Lanches & Pastéis</option>
+                            <option value="porcoes">Porções & Petiscos</option>
                             <option value="bebidas">Bebidas & Chopp</option>
                             <option value="sobremesas">Sobremesas</option>
                         </select>
                     </div>
                     
                     <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-                        <label for="productPrice" style="font-size: 13px; font-weight: 600; color: var(--text-main);">PreÃ§o de Venda (R$)</label>
+                        <label for="productPrice" style="font-size: 13px; font-weight: 600; color: var(--text-main);">Preço de Venda (R$)</label>
                         <input type="number" step="0.10" id="productPrice" required placeholder="18.00" style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 14px;">
                     </div>
                 </div>
 
                 <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-                    <label for="productDescription" style="font-size: 13px; font-weight: 600; color: var(--text-main);">DescriÃ§Ã£o / Ingredientes</label>
-                    <textarea id="productDescription" placeholder="Ex: PÃ£o de xis prensado, 140g de hambÃºrguer, queijo, maionese..." style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); min-height: 75px; resize: vertical; font-family: inherit; font-size: 13px;"></textarea>
+                    <label for="productDescription" style="font-size: 13px; font-weight: 600; color: var(--text-main);">Descrição / Ingredientes</label>
+                    <textarea id="productDescription" placeholder="Ex: Pão de xis prensado, 140g de hambúrguer, queijo, maionese..." style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); min-height: 75px; resize: vertical; font-family: inherit; font-size: 13px;"></textarea>
                 </div>
 
                 <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
@@ -1024,7 +1024,7 @@
                     
                     <!-- Preview Container -->
                     <div id="productImagePreviewCard" class="image-preview-card display-none">
-                        <img id="productImagePreviewThumb" src="" alt="PrÃ©-visualizaÃ§Ã£o" class="image-preview-thumb">
+                        <img id="productImagePreviewThumb" src="" alt="Pré-visualização" class="image-preview-thumb">
                         <div class="image-preview-info">
                             <span class="image-preview-name" id="productImagePreviewName">Imagem selecionada</span>
                             <div class="image-preview-actions">
@@ -1079,10 +1079,7 @@
     <script src="../firebase-config.js"></script>
 
     <!-- Script File -->
-    <script src="painel.js?v=16"></script>
-
-    <!-- PWA Master Initializer -->
-    <script src="../pwa/pwa-init.js" defer></script>
+    <script src="painel.js?v=17"></script>
 
     <!-- Modal Gerenciador de Mesas (Cadastrar, Ativar, Desativar, Excluir) -->
     <div class="modal-backdrop" id="tablesManagerModal" style="display: none;">
@@ -1092,14 +1089,14 @@
                     <span class="material-symbols-rounded" style="color: var(--accent-gold); font-size: 28px;">table_restaurant</span>
                     <div>
                         <h2 style="margin: 0; font-size: 18px; color: var(--text-main); font-family: var(--font-display);">Gerenciador de Mesas</h2>
-                        <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Cadastre novas mesas, ative ou desative conforme a disposiÃ§Ã£o do salÃ£o.</p>
+                        <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Cadastre novas mesas, ative ou desative conforme a disposição do salão.</p>
                     </div>
                 </div>
                 <button type="button" class="btn-close-modal" onclick="closeTablesManagerModal()" style="background: transparent; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer;">&times;</button>
             </div>
 
             <div class="modal-box-body" style="overflow-y: auto; padding: 20px 0; display: flex; flex-direction: column; gap: 20px;">
-                <!-- FormulÃ¡rio: Adicionar Nova Mesa -->
+                <!-- Formulário: Adicionar Nova Mesa -->
                 <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
                     <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 6px;">
                         <span class="material-symbols-rounded" style="font-size: 18px;">add_circle</span>
@@ -1107,11 +1104,11 @@
                     </h4>
                     <form id="addTableForm" onsubmit="handleAddNewTableSubmit(event)" style="display: grid; grid-template-columns: 1fr 1.5fr auto; gap: 10px; align-items: flex-end;">
                         <div>
-                            <label for="newTableNumInput" style="display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 4px;">NÃšMERO / ID</label>
+                            <label for="newTableNumInput" style="display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 4px;">NÚMERO / ID</label>
                             <input type="text" id="newTableNumInput" placeholder="Ex: 21 ou V1" required style="width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-size: 13px; font-weight: 600;">
                         </div>
                         <div>
-                            <label for="newTableNameInput" style="display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 4px;">NOME DE EXIBIÃ‡ÃƒO (OPCIONAL)</label>
+                            <label for="newTableNameInput" style="display: block; font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 4px;">NOME DE EXIBIÇÃO (OPCIONAL)</label>
                             <input type="text" id="newTableNameInput" placeholder="Ex: Mesa 21 ou Varanda 1" style="width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-size: 13px;">
                         </div>
                         <button type="submit" class="btn-status-next" style="padding: 9px 16px; border-radius: var(--radius-sm); border: none; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
@@ -1135,8 +1132,8 @@
                                     <th style="padding: 10px 14px;">Mesa</th>
                                     <th style="padding: 10px 14px;">Nome</th>
                                     <th style="padding: 10px 14px;">Status Atual</th>
-                                    <th style="padding: 10px 14px; text-align: center;">Ativa no GarÃ§om</th>
-                                    <th style="padding: 10px 14px; text-align: center;">AÃ§Ãµes</th>
+                                    <th style="padding: 10px 14px; text-align: center;">Ativa no Garçom</th>
+                                    <th style="padding: 10px 14px; text-align: center;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tablesManagerTableBody">

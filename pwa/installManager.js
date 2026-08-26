@@ -59,6 +59,7 @@ window.PWAInstallManager = {
   // Exibe o botão "📲 Instalar Aplicativo" no topo ou flutuante
   showInstallButton: function () {
     if (this.isStandalone()) return;
+    if (window.location.pathname.includes('/painel') || window.location.pathname.endsWith('painel.html')) return;
     if (document.getElementById('pwa-header-install-btn')) return;
 
     // Procura por um contêiner no cabeçalho ou insere como botão flutuante elegante
@@ -113,6 +114,7 @@ window.PWAInstallManager = {
   // Modal Elegante da Primeira Visita
   showInstallModal: function () {
     if (this.isStandalone()) return;
+    if (window.location.pathname.includes('/painel') || window.location.pathname.endsWith('painel.html')) return;
     if (document.getElementById('pwa-install-modal')) return;
 
     const modalHtml = `

@@ -3501,8 +3501,8 @@ function renderMenuManager() {
 
 function getCategoryDisplayName(catKey) {
     const names = {
-        'lanches': 'Lanches & PastÃ©is',
-        'porcoes': 'PorÃ§Ãµes & Petiscos',
+        'lanches': 'Lanches & Pastéis',
+        'porcoes': 'Porções & Petiscos',
         'bebidas': 'Bebidas & Chopp',
         'sobremesas': 'Sobremesas',
         'adicionais': 'Adicionais'
@@ -3542,10 +3542,10 @@ function renderCategoryFilterTabs() {
     btnAds.onclick = () => setMenuCategoryFilter('tab_adicionais');
     nav.appendChild(btnAds);
     
-    // Tab "Pop-up PromoÃ§Ãµes"
+    // Tab "Pop-up Promoções"
     const btnPromo = document.createElement('button');
     btnPromo.className = `filter-tab ${activeMenuCategory === 'tab_promo' ? 'active' : ''}`;
-    btnPromo.innerText = 'Pop-up PromoÃ§Ãµes';
+    btnPromo.innerText = 'Pop-up Promoções';
     btnPromo.onclick = () => setMenuCategoryFilter('tab_promo');
     nav.appendChild(btnPromo);
 }
@@ -4158,15 +4158,15 @@ function savePromoConfig(event) {
         firebase.database().ref('menu/promo_config').set(menuData.promo_config)
         .then(() => {
             triggerCentralAutoBackup();
-            showToast('ConfiguraÃ§Ãµes de promoÃ§Ã£o salvas no Firebase!', 'success');
+            showToast('Configurações de promoção salvas no Firebase!', 'success');
         })
         .catch(err => {
             console.error(err);
-            alert("Erro ao salvar configuraÃ§Ãµes de promoÃ§Ã£o.");
+            alert("Erro ao salvar configurações de promoção.");
         });
     } else {
         saveLocalMenu(() => {
-            showToast('ConfiguraÃ§Ãµes de promoÃ§Ã£o salvas localmente!', 'success');
+            showToast('Configurações de promoção salvas localmente!', 'success');
         });
     }
 }
