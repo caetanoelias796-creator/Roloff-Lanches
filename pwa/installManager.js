@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Install Manager - Roloff Lanches PWA
    ========================================================================== */
 
@@ -175,7 +175,7 @@ window.PWAInstallManager = {
             font-size: 14px;
             line-height: 1.8;
           ">
-            <li>🍕 Peça pizzas mais rápido.</li>
+            <li>🍔 Peça lanches e porções mais rápido.</li>
             <li>🎁 Receba promoções exclusivas.</li>
             <li>⚡ Tenha uma experiência igual à de um aplicativo nativo.</li>
           </ul>

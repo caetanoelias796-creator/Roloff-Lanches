@@ -1,4 +1,4 @@
-﻿
+
 /* ==========================================================================
    Date & Period Filter Helpers & Global State
    ========================================================================== */
@@ -297,6 +297,24 @@ function getTableGroupingKey(order) {
         return `mesa_${norm}`;
     }
     return `mesa_${order.id || 'desconhecido'}`;
+}
+
+function isTableOccupied(tableNumOrKey) {
+    const normNum = getCanonicalTableNumber(tableNumOrKey);
+    if (!normNum) return false;
+
+    const allOrders = Array.isArray(orders) ? orders : [];
+    const hasActiveOrders = allOrders.some(o => {
+        return isTableOrderEntity(o) && isTableComandaOpen(o) && getCanonicalTableNumber(o) === normNum;
+    });
+    if (hasActiveOrders) return true;
+
+    const tableState = (firebaseTablesState && (firebaseTablesState[normNum] || firebaseTablesState[`mesa_${normNum}`])) || null;
+    if (tableState && tableState.status === 'aberta' && (Number(tableState.comandasCount) > 0 || Number(tableState.total) > 0)) {
+        return true;
+    }
+
+    return false;
 }
 
 let isUnifyingDuplicates = false;
@@ -1555,7 +1573,7 @@ function sendToMotoboy(orderId) {
         itemsText = 'Não especificado';
     }
 
-    const msg = `🛵 PIZZARIA DRILL
+    const msg = `🛵 ROLOFF LANCHES
 
 📦 NOVA ENTREGA
 
@@ -1681,7 +1699,8 @@ function renderTablesDashboard() {
 
     allConfigured.forEach(tableConf => {
         const numFormatted = tableConf.tableNum;
-        const tableName = `Mesa ${numFormatted}`;
+        const tableName = tableConf.tableName || `Mesa ${numFormatted}`;
+        const isActiveTable = tableConf.active !== false;
         const tableState = (firebaseTablesState && (firebaseTablesState[numFormatted] || firebaseTablesState[`mesa_${numFormatted}`])) || null;
 
         const activeOrders = allOrders.filter(o => {
@@ -1723,6 +1742,7 @@ function renderTablesDashboard() {
                 num: numFormatted,
                 name: tableName,
                 isOccupied: true,
+                isActive: isActiveTable,
                 tableSessionId: comandaId,
                 comandaId: comandaId,
                 orders: activeOrders,
@@ -1736,6 +1756,7 @@ function renderTablesDashboard() {
                 num: numFormatted,
                 name: tableName,
                 isOccupied: false,
+                isActive: isActiveTable,
                 tableSessionId: null,
                 comandaId: null,
                 orders: [],
@@ -1748,12 +1769,13 @@ function renderTablesDashboard() {
     });
 
     // Atualiza indicadores do cabeçalho
+    const activeTablesCount = allConfigured.filter(t => t.active !== false).length;
     const occupiedEl = document.getElementById('tablesOccupiedCount');
     const freeEl = document.getElementById('tablesFreeCount');
     const revEl = document.getElementById('tablesTotalRevenue');
 
     if (occupiedEl) occupiedEl.innerText = occupiedCount;
-    if (freeEl) freeEl.innerText = totalTables - occupiedCount;
+    if (freeEl) freeEl.innerText = Math.max(0, activeTablesCount - occupiedCount);
     if (revEl) revEl.innerText = `R$ ${totalRevenueMesas.toFixed(2).replace('.', ',')}`;
 
     // Renderiza cada card de mesa
@@ -1843,15 +1865,34 @@ function renderTablesDashboard() {
                     </button>
                 </div>
             `;
+        } else if (!table.isActive) {
+            card.style.cssText = 'background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: var(--radius-lg); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; min-height: 160px; opacity: 0.55;';
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 16px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; font-weight: 700;">
+                        <span class="material-symbols-rounded" style="color: var(--text-muted);">block</span>
+                        ${table.name}
+                    </h3>
+                    <span style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--border-color); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
+                        ⚪ Desativada
+                    </span>
+                </div>
+                <div style="margin: 20px 0; color: var(--text-muted); font-size: 12px;">
+                    Mesa desativada. Não aparece para atendimento no Garçom.
+                </div>
+                <div style="border-top: 1px dashed var(--border-color); padding-top: 8px; font-size: 11px; color: var(--text-light); font-weight: 600;">
+                    Ative em "Gerenciar Mesas" para liberar.
+                </div>
+            `;
         } else {
-            card.style.cssText = 'background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: var(--radius-lg); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; min-height: 160px; opacity: 0.75;';
+            card.style.cssText = 'background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: var(--radius-lg); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; min-height: 160px; opacity: 0.85;';
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="margin: 0; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 8px; font-weight: 700;">
                         <span class="material-symbols-rounded" style="color: var(--text-muted);">table_restaurant</span>
                         ${table.name}
                     </h3>
-                    <span style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--border-color); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
+                    <span style="background: rgba(76, 175, 80, 0.15); color: #4caf50; border: 1px solid rgba(76, 175, 80, 0.4); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
                         🟢 Livre
                     </span>
                 </div>
@@ -5546,17 +5587,20 @@ function validateMenuBackupData(data) {
         return { valid: false, error: 'O arquivo não contém a estrutura "menu_items".' };
     }
     
-    if (!Array.isArray(data.menu_items.pizzas) || data.menu_items.pizzas.length === 0) {
-        return { valid: false, error: 'Nenhum sabor de pizza válido encontrado no arquivo de backup.' };
+    const categories = Object.keys(data.menu_items);
+    if (categories.length === 0) {
+        return { valid: false, error: 'Nenhuma categoria de produtos encontrada no arquivo de backup.' };
     }
     
-    if (!Array.isArray(data.menu_items.bebidas)) {
-        return { valid: false, error: 'A seção de bebidas do arquivo de backup está ausente ou malformatada.' };
-    }
-    
-    const invalidPizza = data.menu_items.pizzas.find(p => !p.name || !p.category);
-    if (invalidPizza) {
-        return { valid: false, error: 'Existem sabores de pizza com nome ou categoria ausentes no backup.' };
+    let totalItems = 0;
+    categories.forEach(cat => {
+        if (Array.isArray(data.menu_items[cat])) {
+            totalItems += data.menu_items[cat].length;
+        }
+    });
+
+    if (totalItems === 0) {
+        return { valid: false, error: 'Nenhum item ou produto válido encontrado no arquivo de backup.' };
     }
 
     return { valid: true, error: null };
@@ -5580,15 +5624,23 @@ function handleImportMenuBackup(event) {
                 return;
             }
             
-            const countPizzas = importedData.menu_items.pizzas.length;
-            const countBebidas = importedData.menu_items.bebidas.length;
+            const categories = Object.keys(importedData.menu_items);
+            let summaryLines = [];
+            let totalCount = 0;
+            categories.forEach(cat => {
+                if (Array.isArray(importedData.menu_items[cat])) {
+                    const count = importedData.menu_items[cat].length;
+                    totalCount += count;
+                    summaryLines.push(`• ${count} itens em "${cat}"`);
+                }
+            });
             
             // 2. Explicit User Confirmation with Data Summary
             const userConfirmed = confirm(
                 `⚠️ CONFIRMAÇÃO DE RESTAURAÇÃO DE BACKUP:\n\n` +
                 `Foi encontrado no arquivo:\n` +
-                `• ${countPizzas} sabores de pizza\n` +
-                `• ${countBebidas} itens de bebidas\n\n` +
+                summaryLines.join('\n') + `\n` +
+                `• Total de ${totalCount} produtos cadastrados\n\n` +
                 `Deseja aplicar estas alterações ao cardápio da Roloff Lanches?`
             );
             
