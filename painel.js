@@ -1682,7 +1682,7 @@ function renderTablesDashboard() {
     allConfigured.forEach(tableConf => {
         const numFormatted = tableConf.tableNum;
         const tableName = `Mesa ${numFormatted}`;
-        const tableState = (firebaseTablesState && (firebaseTablesState[numFormatted] || firebaseTablesState[String(i)] || firebaseTablesState[`mesa_${numFormatted}`])) || null;
+        const tableState = (firebaseTablesState && (firebaseTablesState[numFormatted] || firebaseTablesState[`mesa_${numFormatted}`])) || null;
 
         const activeOrders = allOrders.filter(o => {
             const isTable = isTableOrderEntity(o);
@@ -1745,7 +1745,7 @@ function renderTablesDashboard() {
                 openedAt: null
             });
         }
-    }
+    });
 
     // Atualiza indicadores do cabeçalho
     const occupiedEl = document.getElementById('tablesOccupiedCount');
@@ -5505,7 +5505,7 @@ function exportSettingsBackup() {
         const downloadAnchor = document.createElement('a');
         const today = new Date().toISOString().slice(0, 10);
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `mundo-da-pizza-configuracoes-${today}.json`);
+        downloadAnchor.setAttribute("download", `roloff-lanches-configuracoes-${today}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
@@ -5526,7 +5526,7 @@ function exportOrdersBackup() {
         const downloadAnchor = document.createElement('a');
         const today = new Date().toISOString().slice(0, 10);
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `mundo-da-pizza-pedidos-${today}.json`);
+        downloadAnchor.setAttribute("download", `roloff-lanches-pedidos-${today}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();

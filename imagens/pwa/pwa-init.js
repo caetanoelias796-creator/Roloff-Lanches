@@ -1,11 +1,11 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    PWA Master Initializer - Roloff Lanches
    ========================================================================== */
 
 (function () {
   'use strict';
 
-  // 1. Carrega scripts dependentes de forma segura caso ainda não tenham sido injetados
+  // 1. Carrega scripts dependentes de forma segura caso ainda nÃ£o tenham sido injetados
   function loadScript(src, callback) {
     if (document.querySelector(`script[src="${src}"]`)) {
       if (callback) callback();
@@ -21,7 +21,7 @@
     document.head.appendChild(script);
   }
 
-  // Sequência de inicialização modular do PWA
+  // SequÃªncia de inicializaÃ§Ã£o modular do PWA
   function initPWA() {
     // 2. Verifica a Feature Flag Global
     if (!window.PWA_CONFIG || !window.PWA_CONFIG.isEnabled()) {
@@ -31,12 +31,12 @@
 
     console.log('[PWA Init] Inicializando PWA Roloff Lanches v' + window.PWA_CONFIG.APP_VERSION);
 
-    // 3. Inicializa a Splash Screen se aplicável
+    // 3. Inicializa a Splash Screen se aplicÃ¡vel
     if (window.PWASplashScreen) {
       window.PWASplashScreen.init();
     }
 
-    // 4. Inicializa o Gerenciador de Instalação (Banners, Modais, Standalone)
+    // 4. Inicializa o Gerenciador de InstalaÃ§Ã£o (Banners, Modais, Standalone)
     if (window.PWAInstallManager) {
       window.PWAInstallManager.init();
     }
@@ -49,7 +49,7 @@
           .then((registration) => {
             console.log('[PWA Init] Service Worker registrado com sucesso. Scope:', registration.scope);
 
-            // Inicializa o Gerenciador de Atualizações
+            // Inicializa o Gerenciador de AtualizaÃ§Ãµes
             if (window.PWAUpdateManager) {
               window.PWAUpdateManager.init(registration);
             }
@@ -61,12 +61,20 @@
     }
   }
 
-  // Carrega a cadeia de módulos PWA em ordem
-  loadScript('pwa/config.js', function () {
-    loadScript('pwa/cacheManager.js', function () {
-      loadScript('pwa/updateManager.js', function () {
-        loadScript('pwa/installManager.js', function () {
-          loadScript('pwa/splashScreen.js', function () {
+  // Descobre a URL base relativa correta para carregar os mÃ³dulos irmÃ£os do PWA
+  let pwaBase = 'pwa/';
+  const initScript = document.querySelector('script[src*="pwa-init.js"]');
+  if (initScript) {
+    const src = initScript.getAttribute('src');
+    pwaBase = src.substring(0, src.lastIndexOf('/') + 1);
+  }
+
+  // Carrega a cadeia de mÃ³dulos PWA em ordem correta
+  loadScript(pwaBase + 'config.js', function () {
+    loadScript(pwaBase + 'cacheManager.js', function () {
+      loadScript(pwaBase + 'updateManager.js', function () {
+        loadScript(pwaBase + 'installManager.js', function () {
+          loadScript(pwaBase + 'splashScreen.js', function () {
             if (document.readyState === 'loading') {
               document.addEventListener('DOMContentLoaded', initPWA);
             } else {
