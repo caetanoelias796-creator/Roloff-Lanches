@@ -1207,17 +1207,23 @@ function renderOrdersList() {
         // Horário de Retirada / Previsão Combinada
         let pickupTimeHTML = '';
         const currentPickupTime = (order.pickupTime || order.horarioRetirada || '').trim();
-        if (order.checkoutType === 'pickup' || !order.checkoutType || order.checkoutType === 'balcao') {
-            pickupTimeHTML = `
-                <div class="customer-row" style="background: rgba(245, 166, 35, 0.08); padding: 6px 8px; border-radius: 4px; border: 1px dashed rgba(245, 166, 35, 0.3); margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
-                    <span class="label" style="color: #f5a623; font-weight: 600;">🕐 Previsão / Retirada:</span>
-                    <div style="display: flex; gap: 4px; align-items: center;">
-                        <input type="text" id="pickupInput_${order.id}" value="${currentPickupTime}" placeholder="Ex: 19:45" style="width: 85px; padding: 3px 6px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); text-align: center;" onkeydown="if(event.key==='Enter') savePickupTime(${order.id})">
-                        <button type="button" onclick="savePickupTime(${order.id})" style="background: #f5a623; color: #111; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">Salvar</button>
-                    </div>
+        pickupTimeHTML = `
+            <div class="customer-row" style="background: rgba(245, 166, 35, 0.12); padding: 7px 10px; border-radius: 6px; border: 1.5px dashed rgba(245, 166, 35, 0.45); margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
+                <span class="label" style="color: #f5a623; font-weight: 700; display: flex; align-items: center; gap: 4px; font-size: 12px;">
+                    <span class="material-symbols-rounded" style="font-size: 16px;">schedule</span>
+                    <span>Previsão / Horário Combinado:</span>
+                </span>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="text" id="pickupInput_${order.id}" value="${currentPickupTime}" placeholder="Ex: 20:30" style="width: 85px; padding: 5px 8px; font-size: 12px; font-weight: 700; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); text-align: center;" onkeydown="if(event.key==='Enter') saveOrderPickupTime('${order.id}')">
+                    <button type="button" onclick="saveOrderPickupTime('${order.id}')" style="background: #f5a623; color: #111; border: none; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 800; cursor: pointer;" title="Salvar Horário">Salvar</button>
+                    ${currentPickupTime && order.clientPhone ? `
+                        <button type="button" onclick="notifyCustomerPickupTime('${order.id}')" style="background: #25d366; color: #fff; border: none; padding: 5px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;" title="Avisar cliente no WhatsApp">
+                            <span class="material-symbols-rounded" style="font-size: 15px;">send</span>
+                        </button>
+                    ` : ''}
                 </div>
-            `;
-        }
+            </div>
+        `;
 
         card.innerHTML = `
             <div class="order-card-header">
@@ -2161,6 +2167,11 @@ function printTableComandaSummary(comandaIdOrTable) {
             <div class="ticket-order-badge">EXTRATO DE CONTA • ${tableLabel.toUpperCase()}</div>
             <div class="ticket-meta-info">Comanda / Cliente: <b>${(firstOrder.clientName || 'Cliente').toUpperCase()}</b></div>
             <div class="ticket-meta-info">Emissão: ${formattedDate} às ${formattedTime}</div>
+            ${(firstOrder.pickupTime || firstOrder.horarioRetirada) ? `
+                <div class="ticket-meta-info" style="margin-top: 4px; font-weight: 900; border: 1.5px dashed #000; padding: 3px 6px; background: #f5f5f5;">
+                    🕐 PREVISÃO / HORÁRIO: ${(firstOrder.pickupTime || firstOrder.horarioRetirada).toUpperCase()}
+                </div>
+            ` : ''}
         </div>
         
         <div class="ticket-separator"></div>
@@ -2217,21 +2228,28 @@ function notifyCustomerReady(orderId) {
 }
 
 /* ==========================================================================
-   Horário de Retirada Combinado (Manual pela Equipe)
+   Horário de Retirada / Previsão Combinada (Manual pela Equipe)
    ========================================================================== */
 function saveOrderPickupTime(orderId, customVal = null) {
-    const order = orders.find(o => String(o.id) === String(orderId));
-    if (!order) return;
+    const order = orders.find(o => String(o.id) === String(orderId) || String(o.firebaseKey) === String(orderId));
+    if (!order) {
+        console.warn("Pedido não encontrado para salvar horário:", orderId);
+        return;
+    }
     
     let timeVal = customVal;
     if (timeVal === null) {
-        const input = document.getElementById(`pickupInput_${order.id}`);
+        const input = document.getElementById(`pickupInput_${order.id}`) || document.getElementById(`pickupInput_${orderId}`);
         timeVal = input ? input.value.trim() : '';
     }
     
     order.pickupTime = timeVal;
+    order.horarioRetirada = timeVal;
     
-    const updates = { pickupTime: timeVal };
+    const updates = { 
+        pickupTime: timeVal,
+        horarioRetirada: timeVal
+    };
     
     if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
         const refKey = order.firebaseKey || order.id;
@@ -2239,34 +2257,32 @@ function saveOrderPickupTime(orderId, customVal = null) {
         .then(() => {
             triggerCentralAutoBackup();
             if (timeVal) {
-                showToast(`Horário de retirada (${timeVal}) salvo!`, 'success');
+                showToast(`Horário combinado (${timeVal}) salvo com sucesso!`, 'success');
             } else {
-                showToast('Horário de retirada removido.', 'warning');
+                showToast('Horário combinado removido.', 'warning');
             }
+            renderOrdersList();
         })
         .catch(err => {
             console.error("Erro ao salvar horário no Firebase:", err);
-            alert("Erro ao salvar horário no Firebase.");
+            alert("Erro ao salvar horário no Firebase: " + err.message);
         });
     } else {
-        fetch(`/api/orders/${order.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updates)
-        })
-        .then(() => {
-            triggerCentralAutoBackup();
-            if (timeVal) {
-                showToast(`Horário de retirada (${timeVal}) salvo!`, 'success');
-            } else {
-                showToast('Horário de retirada removido.', 'warning');
-            }
-        })
-        .catch(err => console.error(err));
+        triggerCentralAutoBackup();
+        if (timeVal) {
+            showToast(`Horário combinado (${timeVal}) salvo localmente!`, 'success');
+        } else {
+            showToast('Horário combinado removido.', 'warning');
+        }
+        renderOrdersList();
     }
-    
-    renderOrdersList();
 }
+
+function savePickupTime(orderId, customVal = null) {
+    saveOrderPickupTime(orderId, customVal);
+}
+window.savePickupTime = savePickupTime;
+window.saveOrderPickupTime = saveOrderPickupTime;
 
 function editOrderPickupTime(orderId) {
     const order = orders.find(o => String(o.id) === String(orderId));
@@ -2645,9 +2661,9 @@ function printOrderTicket(id) {
                 <span>${entregaLabel}</span>
             </div>
             ${(order.pickupTime || order.horarioRetirada) ? `
-            <div class="ticket-info-row" style="margin-top: 4px; background: #eee; padding: 3px 5px; border: 1px dashed #000;">
-                <span class="ticket-info-label" style="font-weight: bold;">🕐 RETIRADA / PREVISÃO:</span>
-                <span style="font-weight: 800; font-size: 13px;">${(order.pickupTime || order.horarioRetirada).toUpperCase()}</span>
+            <div class="ticket-info-row" style="margin-top: 5px; background: #eee; padding: 4px 6px; border: 1.5px dashed #000;">
+                <span class="ticket-info-label" style="font-weight: 900; font-size: 12.5px;">🕐 PREVISÃO / HORÁRIO:</span>
+                <span style="font-weight: 900; font-size: 13.5px;">${(order.pickupTime || order.horarioRetirada).toUpperCase()}</span>
             </div>
             ` : ''}
             <div style="margin-top: 5px;">
@@ -2724,8 +2740,8 @@ function printKitchenTicket(id) {
     }
 
     const pickupKitchenHTML = (order.pickupTime || order.horarioRetirada) ? `
-        <div style="margin-bottom: 8px; font-size: 14px; font-weight: 800; border: 2px solid #000; padding: 4px 8px; text-align: center; background: #f0f0f0;">
-            🕐 RETIRADA / PREVISÃO: ${(order.pickupTime || order.horarioRetirada).toUpperCase()}
+        <div style="margin-bottom: 10px; font-size: 15px; font-weight: 900; border: 2px solid #000; padding: 5px 8px; text-align: center; background: #f0f0f0;">
+            🕐 PREVISÃO / HORÁRIO: ${(order.pickupTime || order.horarioRetirada).toUpperCase()}
         </div>
     ` : '';
 
