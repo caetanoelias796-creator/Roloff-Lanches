@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    Garçom - Atendimento de Mesas & Lanches
    ========================================================================== */
 
@@ -1349,23 +1349,60 @@ function renderTableSelectorButtons() {
 
     grid.innerHTML = '';
 
+    // Coleta todas as mesas configuradas a partir do nÃ³ /tables
+    const tableKeys = new Set();
     for (let i = 1; i <= 20; i++) {
-        const numFormatted = String(i).padStart(2, '0');
-        const comandas = getTableComandas(numFormatted);
+        tableKeys.add(String(i).padStart(2, '0'));
+    }
+    Object.keys(firebaseTablesState || {}).forEach(k => {
+        const norm = getCanonicalTableNumber(k);
+        if (norm) tableKeys.add(norm);
+    });
+
+    const tablesList = Array.from(tableKeys).map(key => {
+        const tData = (firebaseTablesState && firebaseTablesState[key]) || {};
+        const comandas = getTableComandas(key);
         const isOccupied = comandas.length > 0;
+        const isActive = tData.active !== false;
+        const name = tData.tableName || `Mesa ${key}`;
+        return {
+            tableNum: key,
+            tableName: name,
+            isOccupied: isOccupied,
+            isActive: isActive,
+            comandas: comandas,
+            total: getTableTotal(key)
+        };
+    });
+
+    // OrdenaÃ§Ã£o natural numÃ©rica (01, 02, 03... 20, 21...)
+    tablesList.sort((a, b) => {
+        const numA = parseInt(a.tableNum, 10);
+        const numB = parseInt(b.tableNum, 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.tableNum.localeCompare(b.tableNum);
+    });
+
+    tablesList.forEach(t => {
+        // Exibe apenas mesas ativas OU mesas que possuem comandas abertas
+        if (!t.isActive && !t.isOccupied) return;
+
+        const numFormatted = t.tableNum;
         const isSelected = selectedTable === numFormatted;
-        const tableTotal = getTableTotal(numFormatted);
+        const isOccupied = t.isOccupied;
+        const tableTotal = t.total;
+        const comandas = t.comandas;
 
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `btn-table-choice ${isSelected ? 'selected' : ''} ${isOccupied ? 'occupied' : 'free'}`;
         btn.disabled = false;
         btn.onclick = () => onTableCardClicked(numFormatted);
-        btn.title = isOccupied ? `Mesa ${numFormatted} (${comandas.length} comanda${comandas.length > 1 ? 's' : ''} • R$ ${tableTotal.toFixed(2).replace('.', ',')})` : `Mesa ${numFormatted} (Livre)`;
+        btn.title = isOccupied ? `${t.tableName} (${comandas.length} comanda${comandas.length > 1 ? 's' : ''} â€¢ R$ ${tableTotal.toFixed(2).replace('.', ',')})` : `${t.tableName} (Livre)`;
 
         const statusBadge = isOccupied
-            ? `<span class="table-status-pill occupied">🔴 ${comandas.length} COMANDA${comandas.length > 1 ? 'S' : ''}</span>`
-            : `<span class="table-status-pill free">🟢 LIVRE</span>`;
+            ? `<span class="table-status-pill occupied">ðŸ”´ ${comandas.length} COMANDA${comandas.length > 1 ? 'S' : ''}</span>`
+            : `<span class="table-status-pill free">ðŸŸ¢ LIVRE</span>`;
 
         btn.innerHTML = `
             <div class="table-choice-top">
@@ -1376,7 +1413,7 @@ function renderTableSelectorButtons() {
         `;
         
         grid.appendChild(btn);
-    }
+    });
 }
 
 function openTableSelectorModal() {

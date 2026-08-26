@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roloff-lanches-v5';
+const CACHE_NAME = 'roloff-lanches-v6';
 const STATIC_ASSETS = [
     './',
     './index.html',

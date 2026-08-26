@@ -1,4 +1,207 @@
-﻿/* ==========================================================================
+﻿
+/* ==========================================================================
+   Date & Period Filter Helpers & Global State
+   ========================================================================== */
+let currentPeriodFilter = 'todos'; // 'todos', 'hoje', 'ontem', 'semana', 'mes', 'custom'
+let customFilterStartDate = null;
+let customFilterEndDate = null;
+
+function getStatusPriority(status) {
+    const s = String(status || '').toLowerCase().trim();
+    if (s.includes('pendente') || s.includes('pending')) return 1;
+    if (s.includes('prepar') || s.includes('cozinha')) return 2;
+    if (s.includes('entrega') || s.includes('pronto') || s.includes('delivery')) return 3;
+    if (s.includes('entregue') || s.includes('concl') || s.includes('finaliz')) return 4;
+    if (s.includes('cancel') || s.includes('recus')) return 5;
+    return 6;
+}
+
+function getOrderTimestamp(order) {
+    if (!order) return 0;
+    if (order.timestamp && !isNaN(Number(order.timestamp))) {
+        return Number(order.timestamp);
+    }
+    if (order.id && !isNaN(Number(order.id)) && Number(order.id) > 1500000000000) {
+        return Number(order.id);
+    }
+    if (order.date) {
+        const parts = String(order.date).split(/[\/\-]/);
+        if (parts.length === 3) {
+            if (parts[0].length === 4) {
+                return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])).getTime();
+            } else {
+                return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0])).getTime();
+            }
+        }
+    }
+    return 0;
+}
+
+function matchesOrderDatePeriod(order) {
+    if (currentPeriodFilter === 'todos') return true;
+    const ts = getOrderTimestamp(order);
+    if (!ts) return true; // Se nÃ£o tiver timestamp identificÃ¡vel, inclui para nÃ£o ocultar
+
+    const orderDate = new Date(ts);
+    const now = new Date();
+
+    if (currentPeriodFilter === 'hoje') {
+        return orderDate.getFullYear() === now.getFullYear() &&
+               orderDate.getMonth() === now.getMonth() &&
+               orderDate.getDate() === now.getDate();
+    }
+
+    if (currentPeriodFilter === 'ontem') {
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return orderDate.getFullYear() === yesterday.getFullYear() &&
+               orderDate.getMonth() === yesterday.getMonth() &&
+               orderDate.getDate() === yesterday.getDate();
+    }
+
+    if (currentPeriodFilter === 'semana') {
+        const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+        return orderDate >= sevenDaysAgo;
+    }
+
+    if (currentPeriodFilter === 'mes') {
+        return orderDate.getFullYear() === now.getFullYear() &&
+               orderDate.getMonth() === now.getMonth();
+    }
+
+    if (currentPeriodFilter === 'custom') {
+        if (customFilterStartDate && orderDate < customFilterStartDate) return false;
+        if (customFilterEndDate && orderDate > customFilterEndDate) return false;
+        return true;
+    }
+
+    return true;
+}
+
+function matchesOrderStatusFilter(order) {
+    if (!filterStatus || filterStatus === 'Todos') return true;
+    if (filterStatus === 'Mesas') {
+        const isTable = isTableOrderEntity(order);
+        const isActive = isTableComandaOpen(order);
+        return isTable && isActive;
+    }
+    return order.status === filterStatus;
+}
+
+function setPeriodFilter(period) {
+    currentPeriodFilter = period;
+
+    const periodButtons = {
+        'todos': document.getElementById('btnPeriodTodos'),
+        'hoje': document.getElementById('btnPeriodHoje'),
+        'ontem': document.getElementById('btnPeriodOntem'),
+        'semana': document.getElementById('btnPeriodSemana'),
+        'mes': document.getElementById('btnPeriodMes'),
+        'custom': document.getElementById('btnPeriodCustom')
+    };
+
+    Object.keys(periodButtons).forEach(k => {
+        const btn = periodButtons[k];
+        if (btn) {
+            if (k === period) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+    });
+
+    const customRow = document.getElementById('customDateRangeRow');
+    if (period !== 'custom' && customRow) {
+        customRow.classList.add('display-none');
+        const badge = document.getElementById('activeFilterBadge');
+        if (badge) badge.innerText = '';
+    }
+
+    updateIndicators();
+    renderOrdersList();
+}
+
+function toggleCustomDateFilter() {
+    const customRow = document.getElementById('customDateRangeRow');
+    if (!customRow) return;
+
+    if (customRow.classList.contains('display-none')) {
+        customRow.classList.remove('display-none');
+        const btnCustom = document.getElementById('btnPeriodCustom');
+        if (btnCustom) btnCustom.classList.add('active');
+    } else {
+        customRow.classList.add('display-none');
+    }
+}
+
+function applyCustomDateFilter() {
+    const startInput = document.getElementById('customStartDate');
+    const endInput = document.getElementById('customEndDate');
+    const badge = document.getElementById('activeFilterBadge');
+
+    if (!startInput || !endInput) return;
+
+    const sVal = startInput.value;
+    const eVal = endInput.value;
+
+    if (!sVal && !eVal) {
+        showToast('Selecione ao menos uma data inicial ou final.', 'warning');
+        return;
+    }
+
+    if (sVal) {
+        const [y, m, d] = sVal.split('-').map(Number);
+        customFilterStartDate = new Date(y, m - 1, d, 0, 0, 0, 0);
+    } else {
+        customFilterStartDate = null;
+    }
+
+    if (eVal) {
+        const [y, m, d] = eVal.split('-').map(Number);
+        customFilterEndDate = new Date(y, m - 1, d, 23, 59, 59, 999);
+    } else {
+        customFilterEndDate = null;
+    }
+
+    currentPeriodFilter = 'custom';
+
+    document.querySelectorAll('.btn-period-filter').forEach(btn => btn.classList.remove('active'));
+    const btnCustom = document.getElementById('btnPeriodCustom');
+    if (btnCustom) btnCustom.classList.add('active');
+
+    if (badge) {
+        const sTxt = sVal ? sVal.split('-').reverse().join('/') : 'InÃ­cio';
+        const eTxt = eVal ? eVal.split('-').reverse().join('/') : 'Hoje';
+        badge.innerText = `Filtro ativo: ${sTxt} atÃ© ${eTxt}`;
+    }
+
+    updateIndicators();
+    renderOrdersList();
+    showToast('Filtro de perÃ­odo personalizado aplicado!', 'success');
+}
+
+function clearCustomDateFilter() {
+    const startInput = document.getElementById('customStartDate');
+    const endInput = document.getElementById('customEndDate');
+    const badge = document.getElementById('activeFilterBadge');
+
+    if (startInput) startInput.value = '';
+    if (endInput) endInput.value = '';
+    if (badge) badge.innerText = '';
+
+    customFilterStartDate = null;
+    customFilterEndDate = null;
+
+    setPeriodFilter('todos');
+}
+
+function onOrderStatusFilterChange(status) {
+    setFilter(status);
+}
+
+/* ==========================================================================
    Firebase Initialization
    ========================================================================== */
 if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebase.apps && firebase.apps.length === 0) {
@@ -504,19 +707,36 @@ function fetchOrders(isFirstLoad = false) {
    Update Dashboard Metrics
    ========================================================================== */
 function updateIndicators() {
-    const pendingCount = orders.filter(o => o.status === 'Pendente').length;
-    const preparandoCount = orders.filter(o => o.status === 'Preparando').length;
-    const entregaCount = orders.filter(o => o.status === 'Entrega').length;
+    const periodOrders = (orders || []).filter(matchesOrderDatePeriod);
+
+    const pendingCount = periodOrders.filter(o => o.status === 'Pendente').length;
+    const preparandoCount = periodOrders.filter(o => o.status === 'Preparando').length;
+    const entregaCount = periodOrders.filter(o => o.status === 'Entrega' || o.status === 'Pronto').length;
     
-    // Revenue counts only delivered orders today
-    const revenue = orders
-        .filter(o => o.status === 'Entregue')
-        .reduce((sum, o) => sum + o.total, 0);
+    // Revenue counts delivered orders in this period
+    const revenue = periodOrders
+        .filter(o => o.status === 'Entregue' || o.status === 'Finalizado')
+        .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
         
-    document.getElementById('pendingCount').innerText = pendingCount;
-    document.getElementById('preparandoCount').innerText = preparandoCount;
-    document.getElementById('entregaCount').innerText = entregaCount;
-    document.getElementById('revenueCount').innerText = `R$ ${revenue.toFixed(2)}`;
+    const pendingEl = document.getElementById('pendingCount');
+    const prepEl = document.getElementById('preparandoCount');
+    const entEl = document.getElementById('entregaCount');
+    const revEl = document.getElementById('revenueCount');
+    const revLabel = document.getElementById('revenueCardLabel');
+
+    if (pendingEl) pendingEl.innerText = pendingCount;
+    if (prepEl) prepEl.innerText = preparandoCount;
+    if (entEl) entEl.innerText = entregaCount;
+    if (revEl) revEl.innerText = `R$ ${revenue.toFixed(2).replace('.', ',')}`;
+
+    if (revLabel) {
+        if (currentPeriodFilter === 'hoje') revLabel.innerText = 'Faturamento de Hoje';
+        else if (currentPeriodFilter === 'ontem') revLabel.innerText = 'Faturamento de Ontem';
+        else if (currentPeriodFilter === 'semana') revLabel.innerText = 'Faturamento da Semana';
+        else if (currentPeriodFilter === 'mes') revLabel.innerText = 'Faturamento do MÃªs';
+        else if (currentPeriodFilter === 'custom') revLabel.innerText = 'Faturamento no PerÃ­odo';
+        else revLabel.innerText = 'Faturamento Total';
+    }
 }
 
 /* ==========================================================================
@@ -588,6 +808,11 @@ function setFilter(status) {
             tab.classList.remove('active');
         }
     });
+
+    const statusSelect = document.getElementById('orderStatusFilterSelect');
+    if (statusSelect) {
+        statusSelect.value = status;
+    }
     
     renderOrdersList();
 }
@@ -746,14 +971,22 @@ function renderOrdersList() {
         }
     });
 
+        // Combina filtros de Data/PerÃ­odo e Status
     const filtered = displayList.filter(order => {
-        if (filterStatus === 'Todos') return true;
-        if (filterStatus === 'Mesas') {
-            const isTable = isTableOrderEntity(order);
-            const isActive = isTableComandaOpen(order);
-            return isTable && isActive;
+        return matchesOrderDatePeriod(order) && matchesOrderStatusFilter(order);
+    });
+
+    // OrdenaÃ§Ã£o PrioritÃ¡ria: Pendentes Primeiro -> Em Preparo -> Para Entrega -> ConcluÃ­dos -> Cancelados
+    // Dentro de cada status, pedidos mais recentes primeiro (timestamp decrescente)
+    filtered.sort((a, b) => {
+        const prioA = getStatusPriority(a.status);
+        const prioB = getStatusPriority(b.status);
+        if (prioA !== prioB) {
+            return prioA - prioB;
         }
-        return order.status === filterStatus;
+        const timeA = getOrderTimestamp(a);
+        const timeB = getOrderTimestamp(b);
+        return timeB - timeA;
     });
     
     if (filtered.length === 0) {
@@ -1438,15 +1671,16 @@ function renderTablesDashboard() {
     if (!grid) return;
     grid.innerHTML = '';
 
-    const totalTables = 20;
+    const allConfigured = getAllConfiguredTables();
+    const totalTables = allConfigured.length;
     const tableCardsData = [];
     let occupiedCount = 0;
     let totalRevenueMesas = 0;
 
     const allOrders = Array.isArray(orders) ? orders : [];
 
-    for (let i = 1; i <= totalTables; i++) {
-        const numFormatted = String(i).padStart(2, '0');
+    allConfigured.forEach(tableConf => {
+        const numFormatted = tableConf.tableNum;
         const tableName = `Mesa ${numFormatted}`;
         const tableState = (firebaseTablesState && (firebaseTablesState[numFormatted] || firebaseTablesState[String(i)] || firebaseTablesState[`mesa_${numFormatted}`])) || null;
 
@@ -5486,3 +5720,222 @@ function performCentralAutoBackgroundBackup() {
 
 
 
+
+
+
+/* ==========================================================================
+   Table Management (Gerenciador de Mesas CRUD)
+   ========================================================================== */
+function openTablesManagerModal() {
+    renderTablesManagerList();
+    const modal = document.getElementById('tablesManagerModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeTablesManagerModal() {
+    const modal = document.getElementById('tablesManagerModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function getAllConfiguredTables() {
+    const tableKeys = new Set();
+    // PadrÃ£o inicial: Mesas 01 a 20
+    for (let i = 1; i <= 20; i++) {
+        tableKeys.add(String(i).padStart(2, '0'));
+    }
+    // Todas as mesas existentes no nÃ³ /tables do Firebase
+    Object.keys(firebaseTablesState || {}).forEach(k => {
+        const norm = getCanonicalTableNumber(k);
+        if (norm) tableKeys.add(norm);
+    });
+    // Qualquer mesa encontrada no histÃ³rico de pedidos
+    (orders || []).forEach(o => {
+        if (isTableOrderEntity(o)) {
+            const norm = getCanonicalTableNumber(o);
+            if (norm) tableKeys.add(norm);
+        }
+    });
+
+    const list = Array.from(tableKeys).map(key => {
+        const data = (firebaseTablesState && firebaseTablesState[key]) || {};
+        const isOccupied = isTableOccupied(key);
+        const isActive = data.active !== false;
+        const name = data.tableName || `Mesa ${key}`;
+        return {
+            tableNum: key,
+            tableName: name,
+            active: isActive,
+            isOccupied: isOccupied,
+            status: isOccupied ? 'aberta' : (data.status || 'livre')
+        };
+    });
+
+    // OrdenaÃ§Ã£o natural numÃ©rica
+    list.sort((a, b) => {
+        const numA = parseInt(a.tableNum, 10);
+        const numB = parseInt(b.tableNum, 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.tableNum.localeCompare(b.tableNum);
+    });
+
+    return list;
+}
+
+function renderTablesManagerList() {
+    const tbody = document.getElementById('tablesManagerTableBody');
+    const totalCountEl = document.getElementById('tablesManagerTotalCount');
+    if (!tbody) return;
+
+    const tables = getAllConfiguredTables();
+    if (totalCountEl) totalCountEl.innerText = `${tables.length} mesas cadastradas`;
+
+    tbody.innerHTML = '';
+
+    tables.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.style.cssText = 'border-bottom: 1px solid var(--border-color); font-size: 13px; color: var(--text-main);';
+
+        const statusBadge = t.isOccupied
+            ? '<span style="background: rgba(245, 166, 35, 0.15); color: #f5a623; border: 1px solid rgba(245, 166, 35, 0.4); padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">ðŸŸ¡ Ocupada</span>'
+            : '<span style="background: rgba(76, 175, 80, 0.15); color: #4caf50; border: 1px solid rgba(76, 175, 80, 0.4); padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">ðŸŸ¢ Livre</span>';
+
+        const hasHistory = (orders || []).some(o => isTableOrderEntity(o) && getCanonicalTableNumber(o) === t.tableNum);
+
+        tr.innerHTML = `
+            <td style="padding: 10px 14px; font-weight: 800; color: var(--primary);">#${t.tableNum}</td>
+            <td style="padding: 10px 14px; font-weight: 600;">${t.tableName}</td>
+            <td style="padding: 10px 14px;">${statusBadge}</td>
+            <td style="padding: 10px 14px; text-align: center;">
+                <label class="switch" style="transform: scale(0.85);" title="${t.active ? 'Mesa ativa no GarÃ§om' : 'Mesa desativada'}">
+                    <input type="checkbox" ${t.active ? 'checked' : ''} onchange="toggleTableActiveState('${t.tableNum}', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </td>
+            <td style="padding: 10px 14px; text-align: center;">
+                <button type="button" onclick="deleteTableFromSystem('${t.tableNum}')" title="${hasHistory ? 'Mesa possui histÃ³rico e nÃ£o pode ser apagada (desative-a)' : 'Excluir mesa'}" style="background: transparent; border: none; color: ${hasHistory ? 'var(--text-light)' : '#e53935'}; cursor: ${hasHistory ? 'not-allowed' : 'pointer'}; padding: 4px 6px; border-radius: var(--radius-sm); display: inline-flex; align-items: center;" ${hasHistory ? 'disabled' : ''}>
+                    <span class="material-symbols-rounded" style="font-size: 18px;">${hasHistory ? 'lock' : 'delete'}</span>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function handleAddNewTableSubmit(e) {
+    if (e) e.preventDefault();
+    const numInput = document.getElementById('newTableNumInput');
+    const nameInput = document.getElementById('newTableNameInput');
+    if (!numInput) return;
+
+    const rawNum = numInput.value.trim();
+    if (!rawNum) {
+        showToast('Informe o nÃºmero ou identificaÃ§Ã£o da mesa.', 'warning');
+        return;
+    }
+
+    const normNum = getCanonicalTableNumber(rawNum);
+    const tableName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : `Mesa ${normNum}`;
+
+    const existingTables = getAllConfiguredTables();
+    if (existingTables.some(t => t.tableNum === normNum)) {
+        showToast(`A Mesa #${normNum} jÃ¡ estÃ¡ cadastrada!`, 'warning');
+        return;
+    }
+
+    const payload = {
+        tableNum: normNum,
+        tableName: tableName,
+        status: 'livre',
+        active: true,
+        total: 0,
+        comandasCount: 0,
+        orderIds: []
+    };
+
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+        firebase.database().ref(`tables/${normNum}`).set(payload)
+            .then(() => {
+                firebaseTablesState[normNum] = payload;
+                showToast(`Mesa "${tableName}" (#${normNum}) cadastrada com sucesso!`, 'success');
+                numInput.value = '';
+                if (nameInput) nameInput.value = '';
+                renderTablesManagerList();
+                renderTablesDashboard();
+            })
+            .catch(err => {
+                console.error("Erro ao cadastrar mesa no Firebase:", err);
+                showToast('Erro ao cadastrar mesa no Firebase.', 'error');
+            });
+    } else {
+        firebaseTablesState[normNum] = payload;
+        showToast(`Mesa "${tableName}" (#${normNum}) cadastrada localmente!`, 'success');
+        numInput.value = '';
+        if (nameInput) nameInput.value = '';
+        renderTablesManagerList();
+        renderTablesDashboard();
+    }
+}
+
+function toggleTableActiveState(tableNum, isActive) {
+    const normNum = getCanonicalTableNumber(tableNum);
+    if (!normNum) return;
+
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+        firebase.database().ref(`tables/${normNum}/active`).set(isActive)
+            .then(() => {
+                if (!firebaseTablesState[normNum]) {
+                    firebaseTablesState[normNum] = { tableNum: normNum, tableName: `Mesa ${normNum}`, status: 'livre', total: 0, comandasCount: 0, orderIds: [] };
+                }
+                firebaseTablesState[normNum].active = isActive;
+                showToast(`Mesa #${normNum} ${isActive ? 'ativada' : 'desativada'} com sucesso!`, 'success');
+                renderTablesDashboard();
+            })
+            .catch(err => {
+                console.error("Erro ao alterar status da mesa:", err);
+                showToast('Erro ao sincronizar com o Firebase.', 'error');
+            });
+    } else {
+        if (!firebaseTablesState[normNum]) {
+            firebaseTablesState[normNum] = { tableNum: normNum, tableName: `Mesa ${normNum}`, status: 'livre', total: 0, comandasCount: 0, orderIds: [] };
+        }
+        firebaseTablesState[normNum].active = isActive;
+        showToast(`Mesa #${normNum} ${isActive ? 'ativada' : 'desativada'}!`, 'success');
+        renderTablesDashboard();
+    }
+}
+
+function deleteTableFromSystem(tableNum) {
+    const normNum = getCanonicalTableNumber(tableNum);
+    if (!normNum) return;
+
+    const hasHistory = (orders || []).some(o => isTableOrderEntity(o) && getCanonicalTableNumber(o) === normNum);
+    const isOccupied = isTableOccupied(normNum);
+
+    if (hasHistory || isOccupied) {
+        alert(`A Mesa #${normNum} nÃ£o pode ser excluÃ­da pois possui pedidos ou comandas vinculados a ela.\n\nPara nÃ£o utilizÃ¡-la em novos atendimentos, basta desativar o botÃ£o de ativaÃ§Ã£o.`);
+        return;
+    }
+
+    if (!confirm(`Deseja realmente excluir a Mesa #${normNum} do sistema?`)) {
+        return;
+    }
+
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+        firebase.database().ref(`tables/${normNum}`).remove()
+            .then(() => {
+                delete firebaseTablesState[normNum];
+                showToast(`Mesa #${normNum} excluÃ­da com sucesso!`, 'success');
+                renderTablesManagerList();
+                renderTablesDashboard();
+            })
+            .catch(err => {
+                console.error("Erro ao excluir mesa no Firebase:", err);
+                showToast('Erro ao excluir mesa no Firebase.', 'error');
+            });
+    } else {
+        delete firebaseTablesState[normNum];
+        showToast(`Mesa #${normNum} excluÃ­da!`, 'success');
+        renderTablesManagerList();
+        renderTablesDashboard();
+    }
+}
