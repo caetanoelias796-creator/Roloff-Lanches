@@ -497,7 +497,7 @@ function unifyDuplicateTableOrdersInFirebase(ordersArray) {
 }
 
 /* ==========================================================================
-   Initialization & Authentication
+   Initialization & Authentication (Firebase Auth Audit - Roloff Lanches)
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthentication();
@@ -507,12 +507,26 @@ function checkAuthentication() {
     const loginOverlay = document.getElementById('loginOverlay');
     const dashboardWrapper = document.querySelector('.dashboard-wrapper');
     
+    console.log("--------------------------------------------------");
+    console.log("ðŸ” [Auth Audit - Roloff Lanches] Inicializando verificaÃ§Ã£o de autenticaÃ§Ã£o");
+    if (typeof firebase !== 'undefined' && firebase.app) {
+        try {
+            console.log("ðŸ“Œ [Auth Diagnostic] Firebase Project ID:", firebase.app().options.projectId);
+            console.log("ðŸ“Œ [Auth Diagnostic] Auth Domain:", firebase.app().options.authDomain);
+            console.log("ðŸ“Œ [Auth Diagnostic] Database URL:", firebase.app().options.databaseURL);
+        } catch (e) {
+            console.warn("âš ï¸ [Auth Diagnostic] Erro ao ler opÃ§Ãµes do Firebase:", e);
+        }
+    }
+    
     if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
-                console.log("✅ Firebase Auth: Usuário autenticado verificado!");
-                console.log("• User UID:", user.uid);
-                console.log("• User Email:", user.email);
+                console.log("âœ… [Auth Diagnostic] Firebase Auth: UsuÃ¡rio autenticado ativo!");
+                console.log("â€¢ UID do UsuÃ¡rio:", user.uid);
+                console.log("â€¢ E-mail do UsuÃ¡rio:", user.email);
+                console.log("â€¢ currentUser no SDK:", firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'null');
+                console.log("--------------------------------------------------");
                 
                 if (loginOverlay) loginOverlay.style.display = 'none';
                 if (dashboardWrapper) dashboardWrapper.style.display = 'grid';
@@ -523,13 +537,14 @@ function checkAuthentication() {
                     setupFirebaseRealtime();
                 }
             } else {
-                console.log("🔒 Firebase Auth: Nenhum usuário autenticado. Exibindo tela de login...");
+                console.log("ðŸ”’ [Auth Diagnostic] Firebase Auth: Nenhum usuÃ¡rio autenticado no momento. Exibindo formulÃ¡rio de login.");
+                console.log("--------------------------------------------------");
                 if (loginOverlay) loginOverlay.style.display = 'flex';
                 if (dashboardWrapper) dashboardWrapper.style.display = 'none';
             }
         });
     } else {
-        console.error("❌ Firebase Auth não encontrado.");
+        console.error("âŒ [Auth Diagnostic] Firebase Auth SDK nÃ£o foi carregado.");
         if (loginOverlay) loginOverlay.style.display = 'flex';
         if (dashboardWrapper) dashboardWrapper.style.display = 'none';
     }
@@ -557,7 +572,7 @@ function startApp() {
 }
 
 function handleLoginSubmit(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
     const emailInput = document.getElementById('loginEmail');
     const passwordInput = document.getElementById('loginPassword');
     const errorDiv = document.getElementById('loginError');
@@ -570,6 +585,13 @@ function handleLoginSubmit(event) {
         return;
     }
     
+    console.log("--------------------------------------------------");
+    console.log("ðŸš€ [Auth Diagnostic] Tentando login no Firebase Auth...");
+    console.log("â€¢ Projeto:", (typeof firebase !== 'undefined' && firebase.app) ? firebase.app().options.projectId : 'desconhecido');
+    console.log("â€¢ AuthDomain:", (typeof firebase !== 'undefined' && firebase.app) ? firebase.app().options.authDomain : 'desconhecido');
+    console.log("â€¢ E-mail informado:", email);
+    console.log("â€¢ Senha informada: [PROTEGIDA - Oculta por seguranÃ§a]");
+    
     showLoading('Autenticando no Firebase...');
     if (errorDiv) errorDiv.classList.add('display-none');
     
@@ -578,39 +600,60 @@ function handleLoginSubmit(event) {
             .then((userCredential) => {
                 hideLoading();
                 const user = userCredential.user;
-                console.log("✅ Firebase Auth: Login efetuado com sucesso!", user?.email);
+                console.log("âœ… [Auth Diagnostic] Resultado do signIn: SUCESSO!");
+                console.log("â€¢ UID do usuÃ¡rio autenticado:", user?.uid);
+                console.log("â€¢ E-mail retornado:", user?.email);
+                console.log("â€¢ currentUser no SDK apÃ³s login:", firebase.auth().currentUser?.uid);
+                console.log("--------------------------------------------------");
+                
                 if (errorDiv) errorDiv.classList.add('display-none');
-                showToast('Acesso autorizado!', 'success');
+                showToast('Acesso autorizado! Carregando painel...', 'success');
             })
             .catch((err) => {
                 hideLoading();
-                console.error("❌ Erro Firebase Auth:", err.code, err.message);
+                console.error("âŒ [Auth Diagnostic] Falha no signInWithEmailAndPassword:");
+                console.error("â€¢ CÃ³digo do erro:", err.code);
+                console.error("â€¢ Mensagem do erro:", err.message);
+                
+                if (err.code === 'auth/user-not-found') {
+                    console.warn("âš ï¸ [Auth Diagnostic] O e-mail informado NÃƒO existe no projeto Firebase atual (" + firebase.app().options.projectId + ").");
+                }
+                if (err.code === 'auth/wrong-password') {
+                    console.warn("âš ï¸ [Auth Diagnostic] A senha informada estÃ¡ incorreta para este usuÃ¡rio no Firebase Authentication.");
+                }
+                if (err.code === 'auth/invalid-credential') {
+                    console.warn("âš ï¸ [Auth Diagnostic] Credencial invÃ¡lida (e-mail ou senha incorretos no Firebase Auth).");
+                }
+                if (err.code === 'auth/unauthorized-domain') {
+                    console.warn("âš ï¸ [Auth Diagnostic] Este domÃ­nio (" + window.location.hostname + ") nÃ£o estÃ¡ na lista de Authorized Domains no Firebase Console.");
+                }
+                console.log("--------------------------------------------------");
                 
                 let msg = 'E-mail ou senha incorretos.';
                 switch (err.code) {
                     case 'auth/user-not-found':
-                        msg = 'Usuário não encontrado no Firebase Authentication.';
+                        msg = 'UsuÃ¡rio nÃ£o encontrado no Firebase Authentication deste projeto.';
                         break;
                     case 'auth/wrong-password':
-                        msg = 'Senha incorreta.';
+                        msg = 'Senha incorreta. Verifique e tente novamente.';
                         break;
                     case 'auth/invalid-credential':
-                        msg = 'E-mail ou senha inválidos.';
+                        msg = 'E-mail ou senha invÃ¡lidos no Firebase Authentication.';
                         break;
                     case 'auth/invalid-email':
-                        msg = 'E-mail inválido.';
+                        msg = 'Formato de e-mail invÃ¡lido.';
                         break;
                     case 'auth/too-many-requests':
-                        msg = 'Muitas tentativas. Aguarde alguns minutos.';
+                        msg = 'Muitas tentativas sem sucesso. Aguarde alguns minutos.';
                         break;
                     case 'auth/network-request-failed':
-                        msg = 'Não foi possível conectar ao Firebase. Verifique sua internet.';
+                        msg = 'Falha de conexÃ£o com o Firebase. Verifique sua internet.';
                         break;
                     case 'auth/unauthorized-domain':
-                        msg = 'Este domínio ainda não está autorizado no Firebase Authentication.';
+                        msg = 'DomÃ­nio ' + window.location.hostname + ' nÃ£o estÃ¡ autorizado no Firebase Authentication (Adicione em Auth > Settings > Authorized domains).';
                         break;
                     case 'auth/user-disabled':
-                        msg = 'Esta conta de usuário foi desativada no Firebase.';
+                        msg = 'Esta conta de usuÃ¡rio foi desativada no Firebase.';
                         break;
                     default:
                         msg = err.message || 'Falha ao autenticar no Firebase Authentication.';
@@ -625,16 +668,17 @@ function handleLoginSubmit(event) {
                     passwordInput.value = '';
                     passwordInput.focus();
                 }
-                showToast(msg, 'error', 6000);
+                showToast(msg, 'error', 7000);
             });
     } else {
         hideLoading();
-        const msg = 'Serviço Firebase Auth indisponível no navegador. Recarregue a página.';
+        const msg = 'ServiÃ§o Firebase Auth indisponÃ­vel no navegador. Verifique a conexÃ£o e recarregue.';
+        console.error("âŒ [Auth Diagnostic] firebase.auth() nÃ£o estÃ¡ disponÃ­vel.");
         if (errorDiv) {
             errorDiv.innerHTML = `<span class="material-symbols-rounded">error</span> ${msg}`;
             errorDiv.classList.remove('display-none');
         }
-        showToast(msg, 'error', 6000);
+        showToast(msg, 'error', 7000);
     }
 }
 
