@@ -2,8 +2,7 @@
 /* ==========================================================================
    Date & Period Filter Helpers & Global State
    ========================================================================== */
-let currentPeriodFilter = 'todos'; // 'todos', 'hoje', 'ontem', 'semana', 'mes', 'mes_especifico', 'custom'
-let specificMonthValue = null; // 'YYYY-MM'
+let currentPeriodFilter = 'todos'; // 'todos', 'hoje', 'ontem', 'semana', 'mes', 'custom'
 let customFilterStartDate = null;
 let customFilterEndDate = null;
 
@@ -22,37 +21,17 @@ function getOrderTimestamp(order) {
     if (order.timestamp && !isNaN(Number(order.timestamp))) {
         return Number(order.timestamp);
     }
-    if (order.createdAt && !isNaN(Number(order.createdAt))) {
-        return Number(order.createdAt);
-    }
-    if (order.id && !isNaN(Number(order.id))) {
-        const numId = Number(order.id);
-        if (numId > 1500000000000) {
-            return numId;
-        }
+    if (order.id && !isNaN(Number(order.id)) && Number(order.id) > 1500000000000) {
+        return Number(order.id);
     }
     if (order.date) {
         const parts = String(order.date).split(/[\/\-]/);
         if (parts.length === 3) {
-            let day, month, year;
             if (parts[0].length === 4) {
-                year = Number(parts[0]);
-                month = Number(parts[1]) - 1;
-                day = Number(parts[2]);
+                return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])).getTime();
             } else {
-                day = Number(parts[0]);
-                month = Number(parts[1]) - 1;
-                year = Number(parts[2]);
+                return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0])).getTime();
             }
-            let hours = 0, minutes = 0;
-            if (order.time) {
-                const timeParts = String(order.time).match(/(\d+):(\d+)/);
-                if (timeParts) {
-                    hours = Number(timeParts[1]);
-                    minutes = Number(timeParts[2]);
-                }
-            }
-            return new Date(year, month, day, hours, minutes).getTime();
         }
     }
     return 0;
@@ -61,7 +40,7 @@ function getOrderTimestamp(order) {
 function matchesOrderDatePeriod(order) {
     if (currentPeriodFilter === 'todos') return true;
     const ts = getOrderTimestamp(order);
-    if (!ts) return true;
+    if (!ts) return true; // Se nÃ£o tiver timestamp identificÃ¡vel, inclui para nÃ£o ocultar
 
     const orderDate = new Date(ts);
     const now = new Date();
@@ -91,12 +70,6 @@ function matchesOrderDatePeriod(order) {
                orderDate.getMonth() === now.getMonth();
     }
 
-    if (currentPeriodFilter === 'mes_especifico' && specificMonthValue) {
-        const [targetYear, targetMonth] = specificMonthValue.split('-').map(Number);
-        return orderDate.getFullYear() === targetYear &&
-               (orderDate.getMonth() + 1) === targetMonth;
-    }
-
     if (currentPeriodFilter === 'custom') {
         if (customFilterStartDate && orderDate < customFilterStartDate) return false;
         if (customFilterEndDate && orderDate > customFilterEndDate) return false;
@@ -116,82 +89,8 @@ function matchesOrderStatusFilter(order) {
     return order.status === filterStatus;
 }
 
-function populateSpecificMonthSelect() {
-    const select = document.getElementById('specificMonthSelect');
-    if (!select) return;
-
-    const monthNames = [
-        'Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho',
-        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
-
-    select.innerHTML = '<option value="">ðŸ“… MÃªs EspecÃ­fico...</option>';
-
-    const availableMonths = new Set();
-    const now = new Date();
-
-    for (let i = 0; i < 12; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        availableMonths.add(val);
-    }
-
-    (orders || []).forEach(o => {
-        const ts = getOrderTimestamp(o);
-        if (ts) {
-            const d = new Date(ts);
-            const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            availableMonths.add(val);
-        }
-    });
-
-    const sortedMonths = Array.from(availableMonths).sort().reverse();
-    sortedMonths.forEach(mStr => {
-        const [year, monthNum] = mStr.split('-').map(Number);
-        const label = `${monthNames[monthNum - 1]} de ${year}`;
-        const opt = document.createElement('option');
-        opt.value = mStr;
-        opt.innerText = label;
-        if (currentPeriodFilter === 'mes_especifico' && specificMonthValue === mStr) {
-            opt.selected = true;
-        }
-        select.appendChild(opt);
-    });
-}
-
-function setSpecificMonthFilter(val) {
-    if (!val) {
-        setPeriodFilter('todos');
-        return;
-    }
-    currentPeriodFilter = 'mes_especifico';
-    specificMonthValue = val;
-
-    document.querySelectorAll('.btn-period-filter').forEach(btn => btn.classList.remove('active'));
-
-    const customRow = document.getElementById('customDateRangeRow');
-    if (customRow) customRow.classList.add('display-none');
-
-    const badge = document.getElementById('activeFilterBadge');
-    if (badge) {
-        const [year, mNum] = val.split('-').map(Number);
-        const monthNames = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-        badge.innerText = `MÃªs selecionado: ${monthNames[mNum - 1]} / ${year}`;
-    }
-
-    updateIndicators();
-    renderOrdersList();
-        populateSpecificMonthSelect();
-}
-
 function setPeriodFilter(period) {
     currentPeriodFilter = period;
-    specificMonthValue = null;
-
-    const monthSelect = document.getElementById('specificMonthSelect');
-    if (monthSelect && period !== 'mes_especifico') {
-        monthSelect.value = '';
-    }
 
     const periodButtons = {
         'todos': document.getElementById('btnPeriodTodos'),
@@ -222,7 +121,6 @@ function setPeriodFilter(period) {
 
     updateIndicators();
     renderOrdersList();
-        populateSpecificMonthSelect();
 }
 
 function toggleCustomDateFilter() {
@@ -268,10 +166,6 @@ function applyCustomDateFilter() {
     }
 
     currentPeriodFilter = 'custom';
-    specificMonthValue = null;
-
-    const monthSelect = document.getElementById('specificMonthSelect');
-    if (monthSelect) monthSelect.value = '';
 
     document.querySelectorAll('.btn-period-filter').forEach(btn => btn.classList.remove('active'));
     const btnCustom = document.getElementById('btnPeriodCustom');
@@ -285,7 +179,6 @@ function applyCustomDateFilter() {
 
     updateIndicators();
     renderOrdersList();
-        populateSpecificMonthSelect();
     showToast('Filtro de perÃ­odo personalizado aplicado!', 'success');
 }
 
@@ -497,7 +390,7 @@ function unifyDuplicateTableOrdersInFirebase(ordersArray) {
 }
 
 /* ==========================================================================
-   Initialization & Authentication (Firebase Auth Audit - Roloff Lanches)
+   Initialization & Authentication
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthentication();
@@ -507,26 +400,12 @@ function checkAuthentication() {
     const loginOverlay = document.getElementById('loginOverlay');
     const dashboardWrapper = document.querySelector('.dashboard-wrapper');
     
-    console.log("--------------------------------------------------");
-    console.log("ðŸ” [Auth Audit - Roloff Lanches] Inicializando verificaÃ§Ã£o de autenticaÃ§Ã£o");
-    if (typeof firebase !== 'undefined' && firebase.app) {
-        try {
-            console.log("ðŸ“Œ [Auth Diagnostic] Firebase Project ID:", firebase.app().options.projectId);
-            console.log("ðŸ“Œ [Auth Diagnostic] Auth Domain:", firebase.app().options.authDomain);
-            console.log("ðŸ“Œ [Auth Diagnostic] Database URL:", firebase.app().options.databaseURL);
-        } catch (e) {
-            console.warn("âš ï¸ [Auth Diagnostic] Erro ao ler opÃ§Ãµes do Firebase:", e);
-        }
-    }
-    
     if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
-                console.log("âœ… [Auth Diagnostic] Firebase Auth: UsuÃ¡rio autenticado ativo!");
-                console.log("â€¢ UID do UsuÃ¡rio:", user.uid);
-                console.log("â€¢ E-mail do UsuÃ¡rio:", user.email);
-                console.log("â€¢ currentUser no SDK:", firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'null');
-                console.log("--------------------------------------------------");
+                console.log("✅ Firebase Auth: Usuário autenticado verificado!");
+                console.log("• User UID:", user.uid);
+                console.log("• User Email:", user.email);
                 
                 if (loginOverlay) loginOverlay.style.display = 'none';
                 if (dashboardWrapper) dashboardWrapper.style.display = 'grid';
@@ -537,14 +416,13 @@ function checkAuthentication() {
                     setupFirebaseRealtime();
                 }
             } else {
-                console.log("ðŸ”’ [Auth Diagnostic] Firebase Auth: Nenhum usuÃ¡rio autenticado no momento. Exibindo formulÃ¡rio de login.");
-                console.log("--------------------------------------------------");
+                console.log("🔒 Firebase Auth: Nenhum usuário autenticado. Exibindo tela de login...");
                 if (loginOverlay) loginOverlay.style.display = 'flex';
                 if (dashboardWrapper) dashboardWrapper.style.display = 'none';
             }
         });
     } else {
-        console.error("âŒ [Auth Diagnostic] Firebase Auth SDK nÃ£o foi carregado.");
+        console.error("❌ Firebase Auth não encontrado.");
         if (loginOverlay) loginOverlay.style.display = 'flex';
         if (dashboardWrapper) dashboardWrapper.style.display = 'none';
     }
@@ -572,7 +450,7 @@ function startApp() {
 }
 
 function handleLoginSubmit(event) {
-    if (event) event.preventDefault();
+    event.preventDefault();
     const emailInput = document.getElementById('loginEmail');
     const passwordInput = document.getElementById('loginPassword');
     const errorDiv = document.getElementById('loginError');
@@ -585,13 +463,6 @@ function handleLoginSubmit(event) {
         return;
     }
     
-    console.log("--------------------------------------------------");
-    console.log("ðŸš€ [Auth Diagnostic] Tentando login no Firebase Auth...");
-    console.log("â€¢ Projeto:", (typeof firebase !== 'undefined' && firebase.app) ? firebase.app().options.projectId : 'desconhecido');
-    console.log("â€¢ AuthDomain:", (typeof firebase !== 'undefined' && firebase.app) ? firebase.app().options.authDomain : 'desconhecido');
-    console.log("â€¢ E-mail informado:", email);
-    console.log("â€¢ Senha informada: [PROTEGIDA - Oculta por seguranÃ§a]");
-    
     showLoading('Autenticando no Firebase...');
     if (errorDiv) errorDiv.classList.add('display-none');
     
@@ -600,60 +471,39 @@ function handleLoginSubmit(event) {
             .then((userCredential) => {
                 hideLoading();
                 const user = userCredential.user;
-                console.log("âœ… [Auth Diagnostic] Resultado do signIn: SUCESSO!");
-                console.log("â€¢ UID do usuÃ¡rio autenticado:", user?.uid);
-                console.log("â€¢ E-mail retornado:", user?.email);
-                console.log("â€¢ currentUser no SDK apÃ³s login:", firebase.auth().currentUser?.uid);
-                console.log("--------------------------------------------------");
-                
+                console.log("✅ Firebase Auth: Login efetuado com sucesso!", user?.email);
                 if (errorDiv) errorDiv.classList.add('display-none');
-                showToast('Acesso autorizado! Carregando painel...', 'success');
+                showToast('Acesso autorizado!', 'success');
             })
             .catch((err) => {
                 hideLoading();
-                console.error("âŒ [Auth Diagnostic] Falha no signInWithEmailAndPassword:");
-                console.error("â€¢ CÃ³digo do erro:", err.code);
-                console.error("â€¢ Mensagem do erro:", err.message);
-                
-                if (err.code === 'auth/user-not-found') {
-                    console.warn("âš ï¸ [Auth Diagnostic] O e-mail informado NÃƒO existe no projeto Firebase atual (" + firebase.app().options.projectId + ").");
-                }
-                if (err.code === 'auth/wrong-password') {
-                    console.warn("âš ï¸ [Auth Diagnostic] A senha informada estÃ¡ incorreta para este usuÃ¡rio no Firebase Authentication.");
-                }
-                if (err.code === 'auth/invalid-credential') {
-                    console.warn("âš ï¸ [Auth Diagnostic] Credencial invÃ¡lida (e-mail ou senha incorretos no Firebase Auth).");
-                }
-                if (err.code === 'auth/unauthorized-domain') {
-                    console.warn("âš ï¸ [Auth Diagnostic] Este domÃ­nio (" + window.location.hostname + ") nÃ£o estÃ¡ na lista de Authorized Domains no Firebase Console.");
-                }
-                console.log("--------------------------------------------------");
+                console.error("❌ Erro Firebase Auth:", err.code, err.message);
                 
                 let msg = 'E-mail ou senha incorretos.';
                 switch (err.code) {
                     case 'auth/user-not-found':
-                        msg = 'UsuÃ¡rio nÃ£o encontrado no Firebase Authentication deste projeto.';
+                        msg = 'Usuário não encontrado no Firebase Authentication.';
                         break;
                     case 'auth/wrong-password':
-                        msg = 'Senha incorreta. Verifique e tente novamente.';
+                        msg = 'Senha incorreta.';
                         break;
                     case 'auth/invalid-credential':
-                        msg = 'E-mail ou senha invÃ¡lidos no Firebase Authentication.';
+                        msg = 'E-mail ou senha inválidos.';
                         break;
                     case 'auth/invalid-email':
-                        msg = 'Formato de e-mail invÃ¡lido.';
+                        msg = 'E-mail inválido.';
                         break;
                     case 'auth/too-many-requests':
-                        msg = 'Muitas tentativas sem sucesso. Aguarde alguns minutos.';
+                        msg = 'Muitas tentativas. Aguarde alguns minutos.';
                         break;
                     case 'auth/network-request-failed':
-                        msg = 'Falha de conexÃ£o com o Firebase. Verifique sua internet.';
+                        msg = 'Não foi possível conectar ao Firebase. Verifique sua internet.';
                         break;
                     case 'auth/unauthorized-domain':
-                        msg = 'DomÃ­nio ' + window.location.hostname + ' nÃ£o estÃ¡ autorizado no Firebase Authentication (Adicione em Auth > Settings > Authorized domains).';
+                        msg = 'Este domínio ainda não está autorizado no Firebase Authentication.';
                         break;
                     case 'auth/user-disabled':
-                        msg = 'Esta conta de usuÃ¡rio foi desativada no Firebase.';
+                        msg = 'Esta conta de usuário foi desativada no Firebase.';
                         break;
                     default:
                         msg = err.message || 'Falha ao autenticar no Firebase Authentication.';
@@ -668,17 +518,16 @@ function handleLoginSubmit(event) {
                     passwordInput.value = '';
                     passwordInput.focus();
                 }
-                showToast(msg, 'error', 7000);
+                showToast(msg, 'error', 6000);
             });
     } else {
         hideLoading();
-        const msg = 'ServiÃ§o Firebase Auth indisponÃ­vel no navegador. Verifique a conexÃ£o e recarregue.';
-        console.error("âŒ [Auth Diagnostic] firebase.auth() nÃ£o estÃ¡ disponÃ­vel.");
+        const msg = 'Serviço Firebase Auth indisponível no navegador. Recarregue a página.';
         if (errorDiv) {
             errorDiv.innerHTML = `<span class="material-symbols-rounded">error</span> ${msg}`;
             errorDiv.classList.remove('display-none');
         }
-        showToast(msg, 'error', 7000);
+        showToast(msg, 'error', 6000);
     }
 }
 
@@ -792,7 +641,6 @@ function setupFirebaseRealtime() {
         
         updateIndicators();
         renderOrdersList();
-        populateSpecificMonthSelect();
         if (currentSection === 'tables') {
             renderTablesDashboard();
         }
@@ -841,7 +689,6 @@ function fetchOrders(isFirstLoad = false) {
             
             updateIndicators();
             renderOrdersList();
-        populateSpecificMonthSelect();
             if (currentSection === 'tables') {
                 renderTablesDashboard();
             }
@@ -968,7 +815,6 @@ function setFilter(status) {
     }
     
     renderOrdersList();
-        populateSpecificMonthSelect();
 }
 
 function renderOrdersList() {
@@ -1125,21 +971,13 @@ function renderOrdersList() {
         }
     });
 
-            // Combina filtros de Data/PerÃ­odo e Status
+        // Combina filtros de Data/PerÃ­odo e Status
     const filtered = displayList.filter(order => {
         return matchesOrderDatePeriod(order) && matchesOrderStatusFilter(order);
     });
 
-    // OrdenaÃ§Ã£o:
-    // 1. Pedidos Pendentes ficam no topo absoluto (prio 1)
-    // 2. Pedidos em Preparo (prio 2)
-    // 3. Pedidos para Entrega / Prontos (prio 3)
-    // 4. Pedidos ConcluÃ­dos / Finalizados (prio 4)
-    // 5. Pedidos Cancelados (prio 5)
-    //
-    // Regra CronolÃ³gica:
-    // - Para pedidos PENDENTES e EM PRODUÃ‡ÃƒO (prio 1 a 3): MAIS ANTIGO PRIMEIRO (FIFO / fila da cozinha). Novos pedidos entram no final da fila de pendentes.
-    // - Para pedidos CONCLUÃDOS e CANCELADOS (prio 4 e 5): MAIS RECENTES PRIMEIRO (histÃ³rico).
+    // OrdenaÃ§Ã£o PrioritÃ¡ria: Pendentes Primeiro -> Em Preparo -> Para Entrega -> ConcluÃ­dos -> Cancelados
+    // Dentro de cada status, pedidos mais recentes primeiro (timestamp decrescente)
     filtered.sort((a, b) => {
         const prioA = getStatusPriority(a.status);
         const prioB = getStatusPriority(b.status);
@@ -1148,14 +986,7 @@ function renderOrdersList() {
         }
         const timeA = getOrderTimestamp(a);
         const timeB = getOrderTimestamp(b);
-
-        if (prioA <= 3) {
-            // Fila de atendimento/cozinha: Mais antigo primeiro (ordem de chegada / FIFO)
-            return timeA - timeB;
-        } else {
-            // HistÃ³rico finalizado/cancelado: Mais recente primeiro
-            return timeB - timeA;
-        }
+        return timeB - timeA;
     });
     
     if (filtered.length === 0) {
@@ -2183,7 +2014,6 @@ function finalizeTableComanda(targetIdOrTableNum) {
             showToast(`${clientName} encerrada (${paymentLabel}) com sucesso!`, 'success');
             renderTablesDashboard();
             renderOrdersList();
-        populateSpecificMonthSelect();
         })
         .catch(err => {
             console.error("Erro ao encerrar comanda no Firebase:", err);
@@ -2205,7 +2035,6 @@ function finalizeTableComanda(targetIdOrTableNum) {
             showToast(`${clientName} encerrada (${paymentLabel}) com sucesso!`, 'success');
             renderTablesDashboard();
             renderOrdersList();
-        populateSpecificMonthSelect();
         })
         .catch(err => {
             console.error("Erro ao encerrar comanda:", err);
@@ -2391,7 +2220,6 @@ function saveOrderPickupTime(orderId, customVal = null) {
     }
     
     renderOrdersList();
-        populateSpecificMonthSelect();
 }
 
 function editOrderPickupTime(orderId) {
@@ -2456,7 +2284,6 @@ function clearAllOrders() {
             knownOrderIds.clear();
             updateIndicators();
             renderOrdersList();
-        populateSpecificMonthSelect();
             triggerCentralAutoBackup();
         })
         .catch(err => {
@@ -2482,7 +2309,6 @@ function clearAllOrders() {
                 knownOrderIds.clear();
                 updateIndicators();
                 renderOrdersList();
-        populateSpecificMonthSelect();
                 triggerCentralAutoBackup();
             })
             .catch(fallbackErr => {
@@ -2508,7 +2334,6 @@ function clearAllOrders() {
             knownOrderIds.clear();
             updateIndicators();
             renderOrdersList();
-        populateSpecificMonthSelect();
             triggerCentralAutoBackup();
         })
         .catch(err => {
@@ -6116,79 +5941,5 @@ function deleteTableFromSystem(tableNum) {
         showToast(`Mesa #${normNum} excluÃ­da!`, 'success');
         renderTablesManagerList();
         renderTablesDashboard();
-    }
-}
-
-
-/* ==========================================================================
-   Quick Add Table Modal (+ Adicionar Mesa)
-   ========================================================================== */
-function openAddTableModal() {
-    const modal = document.getElementById('addTableModal');
-    if (modal) modal.style.display = 'flex';
-    const numInput = document.getElementById('quickTableNumInput');
-    if (numInput) {
-        numInput.value = '';
-        setTimeout(() => numInput.focus(), 100);
-    }
-    const nameInput = document.getElementById('quickTableNameInput');
-    if (nameInput) nameInput.value = '';
-}
-
-function closeAddTableModal() {
-    const modal = document.getElementById('addTableModal');
-    if (modal) modal.style.display = 'none';
-}
-
-function handleQuickAddTableSubmit(e) {
-    if (e) e.preventDefault();
-    const numInput = document.getElementById('quickTableNumInput');
-    const nameInput = document.getElementById('quickTableNameInput');
-    if (!numInput) return;
-
-    const rawNum = numInput.value.trim();
-    if (!rawNum) {
-        showToast('Informe o nÃºmero ou identificaÃ§Ã£o da mesa.', 'warning');
-        return;
-    }
-
-    const normNum = getCanonicalTableNumber(rawNum);
-    const tableName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : `Mesa ${normNum}`;
-
-    const existingTables = getAllConfiguredTables();
-    if (existingTables.some(t => t.tableNum === normNum)) {
-        alert(`A Mesa #${normNum} jÃ¡ estÃ¡ cadastrada no sistema! Escolha outro nÃºmero ou identificaÃ§Ã£o.`);
-        return;
-    }
-
-    const payload = {
-        tableNum: normNum,
-        tableName: tableName,
-        status: 'livre',
-        active: true,
-        total: 0,
-        comandasCount: 0,
-        orderIds: []
-    };
-
-    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
-        firebase.database().ref(`tables/${normNum}`).set(payload)
-            .then(() => {
-                firebaseTablesState[normNum] = payload;
-                showToast(`Mesa "${tableName}" (#${normNum}) cadastrada com sucesso no Firebase!`, 'success');
-                closeAddTableModal();
-                renderTablesDashboard();
-                renderTablesManagerList();
-            })
-            .catch(err => {
-                console.error("Erro ao cadastrar mesa no Firebase:", err);
-                showToast('Erro ao cadastrar mesa no Firebase: ' + (err.message || err), 'error');
-            });
-    } else {
-        firebaseTablesState[normNum] = payload;
-        showToast(`Mesa "${tableName}" (#${normNum}) cadastrada localmente!`, 'success');
-        closeAddTableModal();
-        renderTablesDashboard();
-        renderTablesManagerList();
     }
 }
