@@ -3790,7 +3790,7 @@ function renderProductsList() {
         card.innerHTML = `
             <div class="flavor-card-header">
                 <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
-                    <img src="${imgPath}" alt="${item.name}" style="width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover; border: 1px solid var(--border-color); background: #fff;" onerror="this.src='assets/hotdog.jpg'">
+                    <img src="${imgPath}" alt="${item.name}" style="width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover; border: 1px solid var(--border-color); background: #fff;" onerror="this.onerror=null; this.src='../assets/hotdog.jpg';">
                     <div class="flavor-card-info" style="flex: 1;">
                         <h4 style="margin: 0; color: var(--text-main); font-size: 15px; font-weight: 700;">${item.name}</h4>
                         <span class="category-tag salgada">
@@ -4161,18 +4161,23 @@ function deleteAdicional(key) {
 
 function getDefaultProductImageForCategory(catKey) {
     const defaults = {
-        'lanches': 'assets/hotdog.jpg',
-        'porcoes': 'assets/picadao.jpg',
-        'bebidas': 'assets/gourmet_bebida.png',
-        'sobremesas': 'assets/gourmet_sobremesa.png'
+        'lanches': '../assets/hotdog.jpg',
+        'porcoes': '../assets/picadao.jpg',
+        'bebidas': '../assets/gourmet_bebida.png',
+        'sobremesas': '../assets/gourmet_sobremesa.png'
     };
-    return defaults[catKey] || 'assets/hotdog.jpg';
+    return defaults[catKey] || '../assets/hotdog.jpg';
 }
 
 function resolveProductImage(item, categoryKey = 'lanches') {
     if (!item) return getDefaultProductImageForCategory(categoryKey);
-    if (item.image && typeof item.image === 'string' && item.image.trim() !== '') {
-        return item.image;
+    let img = item.image || item.imagem || '';
+    if (img && typeof img === 'string' && img.trim() !== '') {
+        img = img.trim();
+        if (img.startsWith('assets/')) {
+            img = '../' + img;
+        }
+        return img;
     }
     const cat = categoryKey || item.category || 'lanches';
     return getDefaultProductImageForCategory(cat);
@@ -4217,7 +4222,7 @@ function populateProductImageSuggestions(category) {
         ];
     } else if (category === 'porcoes') {
         suggestions = [
-            { label: 'PicadÃ£o Roloff', value: 'assets/picadao.jpg' }
+            { label: 'Picadão Roloff', value: 'assets/picadao.jpg' }
         ];
     } else if (category === 'bebidas') {
         suggestions = [
@@ -4247,7 +4252,7 @@ function handleProductFileUpload(event) {
     if (!file) return;
     
     if (!file.type.startsWith('image/')) {
-        showToast('Por favor, selecione um arquivo de imagem vÃ¡lido.', 'warning');
+        showToast('Por favor, selecione um arquivo de imagem válido.', 'warning');
         return;
     }
     
@@ -4256,7 +4261,7 @@ function handleProductFileUpload(event) {
         hideLoading();
         if (err) {
             console.error(err);
-            showToast('NÃ£o foi possÃ­vel processar a imagem.', 'error');
+            showToast('Não foi possível processar a imagem.', 'error');
             return;
         }
         
@@ -4277,7 +4282,15 @@ function updateProductImagePreview(url, fileName = '') {
     if (!card || !thumb) return;
     
     if (url && url.trim().length > 0) {
-        thumb.src = url;
+        let displayUrl = url.trim();
+        if (displayUrl.startsWith('assets/')) {
+            displayUrl = '../' + displayUrl;
+        }
+        thumb.onerror = function() {
+            this.onerror = null;
+            this.src = '../assets/hotdog.jpg';
+        };
+        thumb.src = displayUrl;
         nameEl.innerText = fileName || (url.length > 40 ? url.substring(0, 37) + '...' : url);
         card.classList.remove('display-none');
     } else {
