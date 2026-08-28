@@ -2813,7 +2813,7 @@ const DEFAULT_MENU_DATA = {
                                            "badge":  "Top",
                                            "available":  true,
                                             "adicionais": {
-                                                "sache_maionese": { "name": "Sache Maionese", "price": 0.0 },
+                                                "maionese_caseira": { "name": "Maionese Caseira", "price": 0.0 },
                                                 "sache_mostarda": { "name": "Sache Mostarda", "price": 0.0 },
                                                 "sache_ketchup": { "name": "Sache Ketchup", "price": 0.0 }
                                             }
@@ -3455,8 +3455,8 @@ const DEFAULT_MENU_DATA = {
                                       ]
                    },
     "adicionais": {
-                       "sache_maionese": {
-                           "name": "Sache Maionese",
+                       "maionese_caseira": {
+                           "name": "Maionese Caseira",
                            "price": 0.0
                        },
                        "sache_mostarda": {

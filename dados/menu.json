@@ -1,4 +1,4 @@
-﻿{
+{
     "menu_items":  {
                        "lanches":  [
                                        {
@@ -11,8 +11,8 @@
                                            "badge":  "Top",
                                            "available":  true,
                                            "adicionais":  {
-                                                              "sache_maionese":  {
-                                                                                     "name":  "Sache Maionese",
+                                                              "maionese_caseira":  {
+                                                                                     "name":  "Maionese Caseira",
                                                                                      "price":  0.0
                                                                                  },
                                                               "sache_mostarda":  {
@@ -662,8 +662,8 @@
                                       ]
                    },
     "adicionais":  {
-                       "sache_maionese":  {
-                                              "name":  "Sache Maionese",
+                       "maionese_caseira":  {
+                                              "name":  "Maionese Caseira",
                                               "price":  0.0
                                           },
                        "sache_mostarda":  {

@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Roloff Lanches - Motor do CardÃ¡pio & Delivery Online
    ========================================================================== */
 
@@ -32,7 +32,7 @@ const DEFAULT_MENU_FALLBACK = {
                         "badge":  "Top",
                         "available":  true,
                         "adicionais": {
-                            "sache_maionese": { "name": "Sache Maionese", "price": 0.0 },
+                            "maionese_caseira": { "name": "Maionese Caseira", "price": 0.0 },
                             "sache_mostarda": { "name": "Sache Mostarda", "price": 0.0 },
                             "sache_ketchup": { "name": "Sache Ketchup", "price": 0.0 }
                         }
@@ -663,8 +663,8 @@ const DEFAULT_MENU_FALLBACK = {
                 ]
 },
     "adicionais":  {
-                       "sache_maionese":  {
-                                              "name":  "Sache Maionese",
+                       "maionese_caseira":  {
+                                              "name":  "Maionese Caseira",
                                               "price":  0.0
                                           },
                        "sache_mostarda":  {
@@ -1042,7 +1042,7 @@ function openProductCustomizer(categoryKey, itemId) {
         let ads = item.adicionais || item.opcionais;
         if (!ads || Object.keys(ads).length === 0) {
             ads = menuData?.adicionais || DEFAULT_MENU_FALLBACK.adicionais || {
-                "sache_maionese": { "name": "Sache Maionese", "price": 0.0 },
+                "maionese_caseira": { "name": "Maionese Caseira", "price": 0.0 },
                 "sache_mostarda": { "name": "Sache Mostarda", "price": 0.0 },
                 "sache_ketchup": { "name": "Sache Ketchup", "price": 0.0 }
             };
